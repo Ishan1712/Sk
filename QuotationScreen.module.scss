@@ -1,0 +1,380 @@
+.quotationScreen {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin: 10px 0 5px;
+  color: #555;
+}
+/* Flex container for dropdown label and input */
+.dropdownBox {
+  display: flex;
+  align-items: center; /* Vertically align label and dropdown */
+  padding: 15px;
+  gap: 10px; /* Space between the label and dropdown */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  width: fit-content; /* Adjust the box width dynamically */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for better visibility */
+}
+
+.dropdownLabel {
+  font-size: 16px;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap; /* Prevent label text wrapping */
+}
+
+/* Serial Number Dropdown Styling for general select tags */
+select {
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+  color: #333;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: border 0.3s ease;
+
+  &:focus {
+    border: 1px solid #0078d4;
+    outline: none;
+  }
+}
+
+/* Enhanced styling specifically for the select dropdown with class .selectDropdown */
+.selectDropdown {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.selectDropdown:hover {
+  background-color: #f0f4f8;
+  border-color: #0078d4;
+}
+
+.selectDropdown:focus {
+  border-color: #0078d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+/* Table Wrapper and Styling */
+.tableWrapper {
+  margin-top: 20px;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fafafa;
+}
+
+.quotationTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  table-layout: auto;
+}
+
+.quotationTable th {
+  padding: 12px 15px;
+  background-color: #0078d4;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  border: 1px solid #0078d4;
+}
+
+.quotationTable td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  vertical-align: middle;
+}
+
+.quotationTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.quotationTable tr:hover {
+  background-color: #e9f1fb;
+}
+
+.quotationTable th:nth-child(3), .quotationTable td:nth-child(3) {
+  min-width: 250px; /* Ensures more space for Drawing & Part Details column */
+}
+
+/* Edit Overlay Styling */
+.editOverlay, .confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.editBox, .confirmBox {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.editBox h3, .confirmBox p {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.scrollableContent {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Button Styling */
+button {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.submitButton {
+  background-color: #4caf50;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #45a049;
+  }
+}
+
+.editButton {
+  background-color: #2196f3;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #1976d2;
+  }
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+}
+
+.confirmButton {
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #45a049;
+  }
+}
+
+.cancelButton {
+  background-color: #f44336;
+  color: white;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+}
+
+.saveButton {
+  background-color: #2196f3;
+  color: white;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #1976d2;
+  }
+}
+
+/* Styling for Nested Drawing and Part Lists */
+.quotationTable td ul {
+  padding-left: 20px;
+  text-align: left;
+  list-style-type: disc;
+  margin: 5px 0;
+}
+
+.partEdit {
+  margin-top: 15px;
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.partEdit label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: normal;
+  margin-bottom: 5px;
+  color: #555;
+  font-size: 14px;
+}
+
+/* Additional Style for Edit Form Inputs */
+.editBox input[type="text"],
+.editBox input[type="date"] {
+  width: calc(100% - 20px);
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease;
+
+  &:focus {
+    border: 1px solid #0078d4;
+    outline: none;
+  }
+}
+
+.editBox .saveButton {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+.editBox .cancelButton {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+.partEdit input[type="text"] {
+  width: 65%;
+  padding: 6px;
+  margin-left: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.confirmBox {
+  text-align: center;
+}
+
+.confirmBox button {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+.downloadButton {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  background-color: #0078d4;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #005a9e;
+  }
+}
+.drawingDropdown {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: border 0.3s ease;
+
+  &:hover {
+    background-color: #f0f4f8;
+    border-color: #0078d4;
+  }
+
+  &:focus {
+    border-color: #0078d4;
+    outline: none;
+  }
+}
+
+.downloadButton {
+  background-color: #ff9800; /* Orange color */
+  color: white;
+  font-size: 10px; /* Matches the other buttons */
+  font-weight: bold; /* Matches the other buttons */
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  width: 125px; /* Same width as other buttons */
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #e68900; /* Slightly darker orange */
+  }
+}
+
+
+.scrollableContainer {
+  max-height: 400px; /* Set a height limit for vertical scrolling */
+  max-width: 100%; /* Optional: set width limit for horizontal scrolling */
+  overflow-x: auto; /* Horizontal scrollbar */
+  overflow-y: auto; /* Vertical scrollbar */
+  border: 1px solid #ccc; /* Optional: border for better visibility */
+  padding: 10px; /* Optional: padding for aesthetics */
+}

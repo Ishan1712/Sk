@@ -1,0 +1,299 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.customerscreen {
+  padding: 20px;
+  background: linear-gradient(135deg, #f4f7f9, #ffffff);
+  border-radius: 8px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+    border-bottom: 2px solid #0078d4;
+    padding-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 20px;
+    margin-top: 30px;
+    color: #444;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+  }
+}
+
+.customerTableWrapper {
+  max-height: 400px; /* Set the desired height */
+  max-width: 100%; /* Allow full-width for horizontal scrolling */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+  border: 1px solid #ddd; /* Optional: Add border for clarity */
+}
+
+// Table styles for customer list
+.customerTable, .customerList {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  th, td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  th {
+    background-color: #0078d4;
+    color: #ffffff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  tr:hover {
+    background-color: #e6f3ff;
+    transition: background-color 0.3s ease;
+  }
+}
+
+// Modal for delete confirmation
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modalMessage {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.yesButton, .noButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+  color: white;
+  min-width: 80px;
+}
+
+.yesButton {
+  background-color: #28a745;
+
+  &:hover {
+    background-color: #218838;
+  }
+}
+
+.noButton {
+  background-color: #007bff;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+}
+
+// Actions buttons for edit and delete
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editButton, .deleteButton {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.editButton {
+  background-color: #1f94e2; /* Blue color for edit */
+  color: #ffffff;
+
+  &:hover {
+    background-color: #0672b1;
+    transform: translateY(-2px);
+  }
+}
+
+.deleteButton {
+  background-color: #ff4d4d; /* Red color for delete */
+  color: #ffffff;
+
+  &:hover {
+    background-color: #cc0000;
+    transform: translateY(-2px);
+  }
+}
+
+// Form styles for adding/editing customers
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+
+  label {
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"], input[type="email"], input[type="number"], .dropdown {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: #0078d4;
+      box-shadow: 0 0 3px rgba(0, 120, 212, 0.3);
+    }
+  }
+
+  .dropdown .msDropdownTitle {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+}
+
+// Mobile number fields container
+.mobileNumbersContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .addMobileNumberButton {
+    align-self: flex-start;
+    padding: 5px 10px;
+    background-color: #228B22;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #05421e;
+    }
+  }
+}
+
+// Primary button styles for Add/Update actions
+.customerscreen .PrimaryButton {
+  margin-top: 15px;
+  background-color: #228B22 !important;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    background-color: #05421e;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Search bar styling
+.searchBar {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: #0078d4;
+      box-shadow: 0 0 3px rgba(0, 120, 212, 0.3);
+    }
+  }
+}
+
+// Responsive adjustments for smaller screens
+@media (max-width: 768px) {
+  .customerscreen {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .formContainer,
+  .customerList {
+    padding: 15px;
+  }
+}
+.SaveDetails {
+  background-color: #0078d4;
+
+  &:hover {
+    background-color: #0461b8;
+  }
+}

@@ -1,0 +1,260 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+.masterscreen {
+  padding: 20px;
+  background: linear-gradient(135deg, #f4f7f9, #ffffff);
+  border-radius: 8px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+    border-bottom: 2px solid #0078d4;
+    padding-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 20px;
+    margin-top: 30px;
+    color: #444;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+  }
+}
+
+// Table styles
+.materialTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  th, td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  th {
+    background-color: #0078d4;
+    color: #ffffff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  tr:hover {
+    background-color: #e6f3ff;
+    transition: background-color 0.3s ease;
+  }
+}
+
+.materialTableContainer {
+  max-height: 400px; /* Set a height limit for vertical scrolling */
+  max-width: 100%; /* Optional: set width limit for horizontal scrolling */
+  overflow-x: auto; /* Horizontal scrollbar */
+  overflow-y: auto; /* Vertical scrollbar */
+  border: 1px solid #ccc; /* Optional: border for better visibility */
+  padding: 10px; /* Optional: padding for aesthetics */
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modalMessage {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 20px;
+}
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.yesButton, .noButton, .saveButton, .cancelButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+  color: white;
+  min-width: 80px;
+}
+
+.yesButton {
+  background-color: #28a745;
+
+  &:hover {
+    background-color: #218838;
+  }
+}
+
+.noButton {
+  background-color: #007bff;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.deleteButton {
+  background-color: #ff4d4d; /* Red color for delete */
+  color: #ffffff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: #cc0000; /* Darker red on hover */
+    transform: translateY(-2px);
+  }
+}
+
+.editButton {
+  background-color: #1f94e2; /* Blue color for edit */
+  color: #ffffff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: #0672b1; /* Darker blue on hover */
+    transform: translateY(-2px);
+  }
+}
+
+
+// Form styles
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+
+  label {
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  .dropdown {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: #0078d4;
+      box-shadow: 0 0 3px rgba(0, 120, 212, 0.3);
+    }
+  }
+
+  .dropdown .msDropdownTitle {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+}
+
+// Primary button styles
+.PrimaryButton {
+  margin-top: 15px;
+  background-color:#228B22;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    background-color: #05421e;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Responsive adjustments for smaller screens
+@media (max-width: 768px) {
+  .masterscreen {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .formContainer,
+  .materialTable {
+    padding: 15px;
+  }
+}
+
+.scrollableContainer {
+  max-height: 400px; /* Set a height limit for vertical scrolling */
+  max-width: 100%; /* Optional: set width limit for horizontal scrolling */
+  overflow-x: auto; /* Horizontal scrollbar */
+  overflow-y: auto; /* Vertical scrollbar */
+  border: 1px solid #ccc; /* Optional: border for better visibility */
+  padding: 10px; /* Optional: padding for aesthetics */
+}

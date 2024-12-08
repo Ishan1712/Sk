@@ -1,0 +1,346 @@
+.rfqScreen {
+  padding: 20px;
+  background-color: #f4f4f4;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+
+  h2 {
+    text-align: center;
+    color: #020a11;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .primaryButton {
+    background-color:#4CAF50;
+    color: white;
+    border-radius: 4px;
+    padding: 10px 20px;
+    margin-top: 10px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+
+    &:hover {
+      background-color: 45a049;
+    }
+  }
+
+  .formContainer, .drawingFormContainer, .partFormContainer {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .formContainer {
+    .ms-TextField {
+      width: 100%;
+    }
+  }
+
+  .tableContainer {
+    margin-top: 40px;
+    overflow-x: auto;
+
+    .rfqTable {
+      width: 120%;
+      border-collapse: collapse;
+      margin-top: 20px;
+
+      th, td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #0078d4;
+        color: white;
+        font-weight: bold;
+      }
+
+      td {
+        background-color: #f9f9f9;
+      }
+
+      tr:hover td {
+        background-color: #e1e1e1;
+      }
+      th:nth-child(6), /* Adjust the column number for "Date" */
+      td:nth-child(6) {
+        width: 80px; /* Set desired width for Date column */
+        text-align: center; /* Optional: Center-align date values */
+      }
+    }
+  }
+  .rfqTable th:last-child, .rfqTable td:last-child {
+    width: 10px; /* Set your desired width */
+    text-align: center; /* Optional: Center-align content */
+  }
+  .addPartButton {
+    margin-top: 10px;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  .addPartButton,
+  .primaryButton {
+    width: auto;
+    margin-right: 10px;
+  }
+
+  .formContainer,
+  .drawingFormContainer,
+  .partFormContainer {
+    width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .partFormContainer {
+    width: 350px;
+  }
+
+  .ms-Dropdown {
+    width: 100%;
+  }
+
+  /* Modal Styles */
+  .ms-Dialog-main {
+    border-radius: 8px;
+  }
+
+  .ms-Dialog-footer {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .ms-Dialog-content {
+    padding: 20px;
+  }
+
+  .ms-Dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0078d4;
+  }
+
+  .ms-Dialog-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .drawingContainer {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  .partForm {
+    margin-top: 10px;
+  }
+
+  .ms-Button {
+    margin-left: 10px;
+  }
+  
+  .editButton {
+    background-color: #0d6efd; /* Blue color */
+    color: white;
+    width: auto;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    margin-right: 10px; 
+  
+    &:hover {
+      background-color: #0b5ed7; /* Slightly darker blue on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+  
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 4px #0b5ed7;
+    }
+  }
+  
+  .deleteButton {
+    background-color: #f31919; /* Red color */
+    color: white;
+    width: auto;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  
+    &:hover {
+      background-color: #bb2d3b; /* Slightly darker red on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+  
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 4px #bb2d3b;
+    }
+  }
+  
+
+  /* Delete Confirmation Modal */
+  .confirmOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .confirmBox {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+    p {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    .confirmButton {
+      background-color: #4caf50;
+      color: white;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-right: 10px;
+
+      &:hover {
+        background-color: #45a049;
+      }
+    }
+
+    .cancelButton {
+      background-color: #f44336;
+      color: white;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: #d32f2f;
+      }
+    }
+  }
+
+  /* Edit Form Styles */
+  .editOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .editBox {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+    h3 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    input[type='text'],
+    input[type='date'] {
+      width: calc(100% - 20px);
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #333;
+      background-color: #f9f9f9;
+      transition: border 0.3s ease;
+
+      &:focus {
+        border: 1px solid #0078d4;
+        outline: none;
+      }
+    }
+
+    .saveButton {
+      margin-top: 15px;
+      background-color: #2196f3;
+      color: white;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: #1976d2;
+      }
+    }
+
+    .cancelButton {
+      margin-top: 15px;
+      background-color: #f44336;
+      color: white;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: #d32f2f;
+      }
+    }
+  }
+}
