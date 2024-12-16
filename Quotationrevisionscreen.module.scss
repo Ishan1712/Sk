@@ -1,0 +1,364 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
+.quotationrevisionscreen {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #333;
+
+  h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+    margin: 10px 0 5px;
+    color: #555;
+  }
+}
+
+/* Dropdown Styling */
+.selectDropdown {
+  padding: 10px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+  color: #333;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    border-color: #0078d4;
+    background-color: #f0f4f8;
+  }
+
+  &:focus {
+    border-color: #0078d4;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+  }
+}
+
+/* Table Styling */
+.tableWrapper {
+  margin-top: 20px;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fafafa;
+}
+
+.quotationTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+
+  th {
+    padding: 12px 15px;
+    background-color: #0078d4;
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 1px solid #0078d4;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    vertical-align: middle;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  tr:hover {
+    background-color: #e9f1fb;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    min-width: 250px;
+  }
+
+  /* Nested list in Drawing & Part Details */
+  td ul {
+    padding-left: 20px;
+    text-align: left;
+    list-style-type: disc;
+    margin: 5px 0;
+  }
+}
+
+/* Edit Overlay Styling */
+.editOverlay, .confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.editBox, .confirmBox {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.editBox h3, .confirmBox p {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.scrollableContent {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Button Styling */
+button {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.submitButton {
+  background-color: #4caf50;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #45a049;
+  }
+}
+
+.editButton {
+  background-color: #2196f3;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #1976d2;
+  }
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 125px;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+}
+
+.confirmButton {
+  background-color: #4caf50;
+  color: #fff;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #45a049;
+  }
+}
+
+.cancelButton {
+  background-color: #f44336;
+  color: #fff;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+}
+
+.saveButton {
+  background-color: #2196f3;
+  color: #fff;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #1976d2;
+  }
+}
+
+/* Form and Input Styling */
+.editBox input[type='text'],
+.editBox input[type='date'],
+.partEdit input[type='text'] {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+
+  &:focus {
+    border-color: #0078d4;
+    outline: none;
+  }
+}
+
+.editBox .saveButton {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+.editBox .cancelButton {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+.partEdit input[type="text"] {
+  width: 65%;
+  padding: 6px;
+  margin-left: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.confirmBox {
+  text-align: center;
+}
+
+.confirmBox button {
+  margin-top: 15px;
+  width: calc(50% - 10px);
+}
+
+/* Styling for Edit Form’s Part List Section */
+.partEdit {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+
+  label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: normal;
+    color: #555;
+    margin-bottom: 5px;
+  }
+}
+
+/* Drawing Dropdown */
+.drawingDropdown {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  background-color: #f9f9f9;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: border 0.3s ease;
+
+  &:hover {
+    background-color: #f0f4f8;
+    border-color: #0078d4;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #0078d4;
+  }
+}
+
+.downloadButton {
+  background-color: #ff9800; /* Orange color */
+  color: white;
+  font-size: 10px; /* Matches the other buttons */
+  font-weight: bold; /* Matches the other buttons */
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  width: 125px; /* Same width as other buttons */
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #e68900; /* Slightly darker orange */
+  }
+}
+
+.rfqBox {
+  display: flex;
+  align-items: center; /* Align label and dropdown vertically */
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-right: 15px; /* Add spacing between the label and dropdown */
+  }
+
+  select {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+
+    &:hover {
+      border-color: #0078d4;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #0078d4;
+      box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+    }
+  }
+}

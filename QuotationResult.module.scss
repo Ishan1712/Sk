@@ -1,0 +1,240 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
+.quotationresultscreen {
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+
+  /* Table Styling */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #0078d4;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #e9f1fb;
+    }
+  }
+h2{
+  text-align: center;
+}
+  /* Button Styling */
+  .wonButton, .lossButton {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin: 5px;
+    transition: background-color 0.3s ease;
+    font-size: 12px;
+    font-weight: bold;
+    width: 60px;
+    color: white;
+  }
+
+  .wonButton {
+    background-color: #4caf50; /* Green for Won */
+  
+    &:hover {
+      background-color: #45a049;
+    }
+  }
+
+  .lossButton {
+    background-color: #f44336; /* Red for Loss */
+  
+    &:hover {
+      background-color: #d32f2f;
+    }
+  }
+
+  .confirmButton {
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+  
+    &:hover {
+      background-color: #45a049;
+    }
+  }
+  
+  .cancelButton {
+    background-color: #f44336;
+    color: white;
+    font-weight: bold;
+  
+    &:hover {
+      background-color: #d32f2f;
+    }
+  }
+  
+  .saveButton {
+    background-color: #2196f3;
+    color: white;
+    font-weight: bold;
+  
+    &:hover {
+      background-color: #1976d2;
+    }
+  }
+
+  /* Action Buttons Spacing */
+  .action-button {
+    margin-right: 5px;
+    padding: 5px 10px;
+  }
+
+  /* Actions Column Width */
+  .actionsColumn {
+    width: 200px;
+  }
+
+  /* Row Height Adjustment */
+  .quotation-row td {
+    padding: 10px;
+  }
+
+  /* Modal (Alert Message) Styling */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modalContent {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .modalMessage {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .buttonGroup {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Modal Button Styling */
+  .yesButton, .noButton, .saveButton, .cancelButton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    color: white;
+    min-width: 80px;
+  }
+
+  .yesButton {
+    background-color: #28a745;
+
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  .noButton {
+    background-color: #007bff;
+
+    &:hover {
+      background-color: #0056b3;
+    }
+  }
+
+  /* Styling for Edit Input Field */
+  .modalContent input[type="date"] {
+    width: calc(100% - 20px);
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    background-color: #f9f9f9;
+    transition: border 0.3s ease;
+
+    &:focus {
+      border: 1px solid #0078d4;
+      outline: none;
+    }
+  }
+}
+
+.scrollableContainer {
+  max-height: 400px; /* Limit vertical height */
+  max-width: 100%; /* Allow full width for horizontal scrolling */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+  border: 1px solid #ddd; /* Optional: Add border for clarity */
+  padding: 10px; /* Optional: Add padding for better visuals */
+
+  /* Optional: Style the scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px; /* Width of vertical scrollbar */
+    height: 8px; /* Height of horizontal scrollbar */
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #0078d4; /* Scrollbar thumb color */
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #005a9e; /* Darker thumb on hover */
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: #f1f1f1; /* Scrollbar track color */
+  }
+}
+
+.reviseButton {
+  background-color: #ffa500; /* Example orange color */
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+  font-size: 12px;
+  font-weight: bold;
+  width: 60px;
+  color: white;
+}
+.reviseButton:hover {
+  background-color: #cc8400; /* Darker shade of orange */
+}
