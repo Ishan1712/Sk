@@ -1,0 +1,319 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
+.pOscreen {
+  overflow: hidden;
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+
+  &.teams {
+    font-family: $ms-font-family-fallbacks;
+  }
+}
+
+.welcome {
+  text-align: center;
+}
+
+.welcomeImage {
+  width: 100%;
+  max-width: 420px;
+}
+
+.links {
+  a {
+    text-decoration: none;
+    color: "[theme:link, default:#03787c]";
+    color: var(--link);
+
+    &:hover {
+      text-decoration: underline;
+      color: "[theme:linkHovered, default: #014446]";
+      color: var(--linkHovered);
+    }
+  }
+}
+
+/* Dropdown Styling */
+.dropdown {
+  margin-bottom: 20px;
+
+  select {
+    display: block;
+    max-width: 300px;
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      background-color: #f0f4f8;
+      border: 1px solid #0078d4;
+    }
+
+    &:focus {
+      outline: none;
+      border: 1px solid #0078d4;
+      box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+    }
+  }
+}
+
+/* Table Wrapper */
+.tableWrapper {
+  margin-top: 20px;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fafafa;
+}
+
+.detailsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.detailsTable th {
+  padding: 12px 15px;
+  background-color: #0078d4;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  border: 1px solid #0078d4;
+}
+h2{
+  text-align: center;
+}
+.detailsTable td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  vertical-align: middle;
+}
+
+.detailsTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.detailsTable tr:hover {
+  background-color: #e9f1fb;
+}
+
+/* Form Overlay */
+.formOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.poForm {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+  h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+    margin: 10px 0 5px;
+    color: #555;
+  }
+
+  input[type='text'],
+  input[type='date'] {
+    width: calc(100% - 20px);
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    background-color: #f9f9f9;
+    transition: border 0.3s ease;
+
+    &:focus {
+      border: 1px solid #0078d4;
+      outline: none;
+    }
+  }
+
+  .formActions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+
+    button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+    }
+
+    .saveButton {
+      background-color: #4caf50;
+      color: white;
+
+      &:hover {
+        background-color: #45a049;
+      }
+    }
+
+    .cancelButton {
+      background-color: #f44336;
+      color: white;
+
+      &:hover {
+        background-color: #d32f2f;
+      }
+    }
+  }
+}
+
+/* Button Styling */
+button {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+  font-size: 14px;
+  font-weight: bold;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+}
+
+/* Add PO Button Styling */
+button.addButton {
+  background-color: #0078d4;
+  color: white; /* Fix color definition */
+  padding: 6px 8px; /* Reduced padding for a sleeker look */
+  font-size: 10px; /* Slightly larger font for better readability */
+  font-weight: bold;
+  border-radius: 4px; /* Smaller border radius for a sharper look */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 60px; /* Adjust width to fit the text content */
+
+  &:hover {
+    background-color: #005a9e;
+    color: white; /* Ensure hover color matches */
+  }
+}
+
+/* Save and Cancel Buttons Styling */
+.poForm .formActions {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 10px;
+
+  button.saveButton {
+    background-color: #4caf50;
+    color: white; /* Ensure correct color */
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+
+    &:hover {
+      background-color: #45a049;
+      color: white;
+    }
+  }
+
+  button.cancelButton {
+    background-color: #f44336;
+    color: white; /* Ensure correct color */
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+
+    &:hover {
+      background-color: #d32f2f;
+      color: white;
+    }
+  }
+}
+
+.dropdownWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  max-width: 400px;
+  margin: 0 auto;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Label Styling */
+.dropdownLabel {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-right: 10px;
+}
+
+/* Select Box Styling */
+.dropdownSelect {
+  flex-grow: 1;
+  padding: 8px 12px;
+  font-size: 16px;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    border: 1px solid #0078d4;
+  }
+
+  &:focus {
+    outline: none;
+    border: 1px solid #0078d4;
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+  }
+}
