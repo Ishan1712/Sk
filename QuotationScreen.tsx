@@ -56,6 +56,7 @@ interface IQuotationScreenState {
   recordToConfirm: IQuotationRecord | null;
   selectedDrawingIndex: number | null;
   rfqNumbers: string[];
+  materialList: IMaterial[];
 }
 
 interface ICustomerDetails {
@@ -67,11 +68,19 @@ interface ICustomerDetails {
   mobileNumbers: string[];
 }
 
+interface IMaterial {
+  partNumber: string;
+  material: string;
+  rate: string;
+  weight: string;
+}
+
 export default class QuotationScreen extends React.Component<IQuotationScreenProps, IQuotationScreenState> {
   constructor(props: IQuotationScreenProps) {
     super(props);
     this.state = {
       records: [],
+      materialList: [],
       isEditing: false,
       selectedSerialNumber: "",
       currentRecord: null,
@@ -91,11 +100,11 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
   private loadRFQNumbersFromSharePoint = async (): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") ;
     // Fetch only RFQs with Status as 'Todo'
     const items = await web.lists
       .getByTitle("RFQList")
-      .items.filter("Status eq 'Todo'") // Filter for Status = 'Todo'
+      .items.filter("Status eq 'Todo'") 
       .select("RFQNumber")
       .get();
 
@@ -109,7 +118,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
   private fetchCustomerDetailsForSpecificRFQ = async (rfqNumber: string): Promise<ICustomerDetails | null> => {
     try {
-       const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Add your site URL here
+       const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); // Add your site URL here
   
       // Fetch the RFQ details for the selected RFQNumber
       const rfqItem = await web.lists
@@ -152,10 +161,34 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     }
   };
   
-
+  private fetchMaterialList = async (): Promise<void> => {
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+  
+      const items = await web.lists
+        .getByTitle("MaterialList")
+        .items.select("PartNumber", "Material", "Rate") // Include necessary fields
+        .get();
+  
+      const materialList = items.map((item: any) => ({
+        partNumber: item.PartNumber,
+        material: item.Material,
+        rate: item.Rate,
+      }));
+  
+      console.log("Material List:", materialList); // Debug log
+      this.setState({ materialList }); // Store as an array
+    } catch (error) {
+      console.error("Error fetching MaterialList:", error);
+      alert("Failed to load material data.");
+    }
+  };
+  
+  
+  
   private fetchDrawingAndPartDetailsBySerialNumber = async (rfqNumber: string): Promise<IDrawing[]> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
   
       // Fetch all drawings for the RFQ
       const drawingItems = await web.lists
@@ -168,8 +201,24 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
       const partItems = await web.lists
         .getByTitle("PartList")
         .items.filter(`RFQNumber eq '${rfqNumber}'`)
-        .select("DrawingNumber", "PartName", "Material", "Quantity", "Grade", "Weight", "Overhead", "Rate", "Labour", "LaserCut", "Primer")
+        .select("DrawingNumber", "PartName", "Material", "Quantity", "Material", "Weight", "Overhead", "Rate", "Labour", "LaserCut", "Primer")
         .get();
+
+
+    // Fetch MaterialList to match part details
+    const materialItems = await web.lists
+    .getByTitle("MaterialList")
+    .items.select( "Weight", "Rate","Material")
+    .get();
+
+    const materialMap = new Map<string, any>();
+    materialItems.forEach((material) => {
+      materialMap.set(material.PartNumber, {
+        weight: material.Weight,
+        rate: material.Rate,
+        material:material.Material,
+      });
+    });
   
       // Map drawing details and integrate part details
       const drawingDetails: IDrawing[] = drawingItems.map((drawing: any) => {
@@ -180,18 +229,25 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
           dlist: `Drawing ${drawing.DrawingNumber}`,
           dno: drawing.DrawingNumber,
           dquan: drawing.DrawingQuantity,
-          partList: partsForDrawing.map((part: any) => ({
-            partName: part.PartName,
-            material: part.Material,
-            quantity: part.Quantity,
-            grade: part.Grade || "",
-            weight: part.Weight || "",
-            overhead: part.Overhead || "",
-            rate: part.Rate || "",
-            labour: part.Labour || "",
-            laserCut: part.LaserCut || "",
-            primer: part.Primer || "",
-          })),
+          partList: partsForDrawing.map((part: any) => {
+            // Auto-populate fields if the part exists in the MaterialList
+            const materialData = materialMap.get(part.PartName) || {};
+  
+            return {
+              partName: part.PartName,
+              material: part.Material,
+              quantity: part.Quantity,
+              grade: part.Grade || "",
+              weight: materialData.weight || part.Weight || "",
+              overhead: part.Overhead || "",
+              rate: materialData.rate || part.Rate || "",
+              labour: part.Labour || "",
+              laserCut: part.LaserCut || "",
+              primer: part.Primer || "",
+              width: materialData.width || "",
+              thickness: materialData.thickness || "",
+            };
+          }),
         };
       });
   
@@ -207,7 +263,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
   private addQuotationToList = async (record: IQuotationRecord): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); 
       console.log("ADD Called")
       console.log("RFQ",record.serialNumber,record.revisionNumber,record.totalweight)
       
@@ -240,7 +296,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     additionalDetails: Partial<IPart>
   ): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
   
       // Check if the part exists
       const items = await web.lists
@@ -284,10 +340,12 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     const serialNumber = e.target.value;
   
     if (!serialNumber) return; // Exit if no RFQ is selected
-  
+
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
   
+      await this.fetchMaterialList();
+
       // Fetch RFQ details
       const rfqItems = await web.lists
         .getByTitle("RFQList")
@@ -301,7 +359,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
       }
   
       const rfq = rfqItems[0];
-  
+
       // Fetch drawing and part details
       const drawingDetails = await this.fetchDrawingAndPartDetailsBySerialNumber(serialNumber);
   
@@ -355,12 +413,45 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     }
   };
   
-  
-  
-  
+  // private handleEdit = (record: IQuotationRecord) => {
+  //   this.setState({ isEditing: true, currentRecord: { ...record } ,selectedDrawingIndex: 0,});
+  // };
+
   private handleEdit = (record: IQuotationRecord) => {
-    this.setState({ isEditing: true, currentRecord: { ...record } ,selectedDrawingIndex: 0,});
+    const { materialList } = this.state;
+  
+    // Update drawingDetails with auto-filled Material and Rate
+    const updatedDrawingDetails = record.drawingDetails.map((drawing) => {
+      const updatedPartList = drawing.partList.map((part) => {
+        // Use indexOf to find the index of the matching part
+        const partIndex = materialList.map((m) => m.partNumber).indexOf(part.partName);
+  
+        // If the part exists, fetch its details; otherwise, provide defaults
+        const materialDetails = partIndex !== -1 ? materialList[partIndex] : undefined;
+  
+        return {
+          ...part,
+          material: materialDetails?.material || part.material, // Populate Material
+          rate: materialDetails?.rate || part.rate,             // Populate Rate
+        };
+      });
+  
+      return { ...drawing, partList: updatedPartList };
+    });
+  
+    this.setState({
+      isEditing: true,
+      currentRecord: {
+        ...record,
+        drawingDetails: updatedDrawingDetails,
+      },
+      selectedDrawingIndex: 0, // Default to the first drawing
+    });
   };
+  
+  
+  
+  
 
   private handleDrawingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({ selectedDrawingIndex: parseInt(e.target.value) });
@@ -375,7 +466,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     const { recordToConfirm, records } = this.state;
     if (recordToConfirm) {
       try {
-        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Replace with your SharePoint site URL
+        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") ;// Replace with your SharePoint site URL
   
         // Add the record to the QuotationList
         await this.addQuotationToList(recordToConfirm);
@@ -401,7 +492,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
         // Update the record's status locally
         const updatedRecords = records.map((rec) =>
-          rec.id === recordToConfirm.id ? { ...rec, status: "Working Done" } : rec
+          rec.id === recordToConfirm.id ? { ...rec, status: "WorkingDone" } : rec
         );
   
         this.setState({ records: updatedRecords, showSubmitConfirm: false, recordToConfirm: null });
@@ -440,33 +531,159 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     if (currentRecord) {
       const rfqNumber = currentRecord.rfqNumber;
   
-      // Iterate over drawings and their parts to save updates
-      for (const drawing of currentRecord.drawingDetails) {
-        for (const part of drawing.partList) {
-          // Save updated part details to the PartList
-          await this.addAdditionalPartDetails(rfqNumber, drawing.dno, part.partName, {
-            grade: part.grade,
-            weight: part.weight,
-            overhead: part.overhead,
-            rate: part.rate,
-            labour: part.labour,
-            laserCut: part.laserCut,
-            primer: part.primer,
-          });
+      try {
+        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); // Replace with your SharePoint site URL
+  
+        for (const drawing of currentRecord.drawingDetails) {
+          for (const part of drawing.partList) {
+            const partName = part.partName;
+  
+            // 1. Update MaterialList with new Weight, Rate, and Material
+            await this.updateMaterialList(partName, part);
+  
+            // 2. Add new entry to RateDatePairList with Rate, Material, and Quotation Date
+            await this.addToRateDatePairList(partName, part.material, part.rate, currentRecord.quotationDate);
+
+
+          // 3. Update PartList with new Weight, Rate, and Material
+          await this.updatePartList(rfqNumber, drawing.dno, partName, part);
+          }
         }
+  
+        // Update the local state with calculated totals
+        currentRecord.totalweight = this.calculateTotalWeight(currentRecord);
+        currentRecord.totalRate = this.calculateTotalRate(currentRecord);
+        currentRecord.totalAmount = this.calculateTotalAmount(currentRecord);
+  
+        const updatedRecords = records.map((record) =>
+          record.id === currentRecord.id ? currentRecord : record
+        );
+  
+        this.setState({
+          records: updatedRecords,
+          isEditing: false,
+          currentRecord: null,
+        });
+  
+        alert("Record saved successfully and updated in MaterialList and RateDatePairList!");
+      } catch (error) {
+        console.error("Error saving edits:", error);
+        alert("Failed to save changes. Please try again.");
       }
-  
-      // Update local state for UI
-      currentRecord.totalweight = this.calculateTotalWeight(currentRecord);
-      currentRecord.totalRate = this.calculateTotalRate(currentRecord);
-      currentRecord.totalAmount = this.calculateTotalAmount(currentRecord);
-  
-      const updatedRecords = records.map((record) =>
-        record.id === currentRecord.id ? currentRecord : record
-      );
-      this.setState({ records: updatedRecords, isEditing: false, currentRecord: null });
     }
   };
+
+  private updatePartList = async (
+    rfqNumber: string,
+    drawingNumber: string,
+    partName: string,
+    part: IPart
+  ): Promise<void> => {
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");// Replace with your SharePoint site URL
+  
+      // Find the part in the PartList that matches RFQNumber, DrawingNumber, and PartName
+      const items = await web.lists
+        .getByTitle("PartList")
+        .items.filter(
+          `RFQNumber eq '${rfqNumber}' and DrawingNumber eq '${drawingNumber}' and PartName eq '${partName}'`
+        )
+        .select("Id")
+        .get();
+  
+      if (items.length > 0) {
+        const itemId = items[0].Id;
+  
+        // Update the existing part in PartList with new values
+        await web.lists
+          .getByTitle("PartList")
+          .items.getById(itemId)
+          .update({
+            Weight: part.weight,
+            Rate: part.rate,
+            Material: part.material,
+            Overhead: part.overhead,
+            Labour: part.labour,
+            LaserCut: part.laserCut,
+            Primer: part.primer,
+          });
+  
+        console.log(`PartList updated for PartName: ${partName}, DrawingNumber: ${drawingNumber}`);
+      } else {
+        console.warn(`No matching part found in PartList for PartName: ${partName}.`);
+      }
+    } catch (error) {
+      console.error("Error updating PartList:", error);
+      throw error;
+    }
+  };
+  
+
+  private updateMaterialList = async (partName: string, part: IPart): Promise<void> => {
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); // Replace with your SharePoint site URL
+  
+      // Find the item in MaterialList that matches the PartName
+      const items = await web.lists
+        .getByTitle("MaterialList")
+        .items.filter(`PartNumber eq '${partName}'`)
+        .select("Id")
+        .get();
+  
+      if (items.length > 0) {
+        const itemId = items[0].Id;
+  
+        // Update the matching item with new values
+        await web.lists
+          .getByTitle("MaterialList")
+          .items.getById(itemId)
+          .update({
+            Weight: part.weight,
+            Rate: part.rate,
+            Material: part.material,
+          });
+  
+        console.log(`MaterialList updated for PartNumber: ${partName}`);
+      } else {
+        console.warn(`PartNumber ${partName} not found in MaterialList.`);
+      }
+    } catch (error) {
+      console.error("Error updating MaterialList:", error);
+      throw error;
+    }
+  };
+  
+  private addToRateDatePairList = async (
+  partName: string,
+  material: string,
+  rate: string,
+  quotationDate: Date | null
+): Promise<void> => {
+  try {
+    if (!quotationDate) {
+      console.warn("Quotation date is missing, skipping RateDatePairList update.");
+      return;
+    }
+
+    const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");// Replace with your SharePoint site URL
+
+    // Add a new record to RateDatePairList
+    await web.lists
+      .getByTitle("RateDatePairList")
+      .items.add({
+        PartNumber: partName,
+        Material: material,
+        Rate: rate,
+        Date: quotationDate.toISOString(),
+      });
+
+    console.log(`RateDatePairList updated for PartNumber: ${partName}`);
+  } catch (error) {
+    console.error("Error adding to RateDatePairList:", error);
+    throw error;
+  }
+};
+
   
 
   private cancelEdit = () => {
@@ -508,16 +725,20 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     drawingIndex?: number,
     partIndex?: number
   ) => {
-    const { name } = e.target;
+    const { name, value } = e.target;
   
-    const updatedValue =
-  name === "quotationDate"
-    ? (e.target as HTMLInputElement).valueAsDate
-    : name === "totalweight" || name === "totalRate" || name === "totalAmount"
-    ? parseFloat(e.target.value) || 0 // Ensure numbers are parsed
-    : e.target.value;
-
+    // Ensure value matches the expected type
+    let updatedValue: string;
   
+    if (name === "quotationDate") {
+      updatedValue = (e.target as HTMLInputElement).valueAsDate
+        ? (e.target as HTMLInputElement).valueAsDate!.toISOString().split('T')[0] // Convert Date to string
+        : ""; // Default to an empty string if null
+    } else {
+      updatedValue = value; // Default to string for other fields
+    }
+  
+    // Update state synchronously
     this.setState((prevState) => {
       if (drawingIndex !== undefined && partIndex !== undefined) {
         const updatedRecord = { ...prevState.currentRecord };
@@ -527,14 +748,11 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
         };
         return { currentRecord: updatedRecord };
       }
-      return {
-        currentRecord: {
-          ...prevState.currentRecord!,
-          [name]: updatedValue,
-        },
-      };
+      return { currentRecord: { ...prevState.currentRecord!, [name]: updatedValue } };
     });
   };
+  
+  
 
   private calculateTotalWeight = (record: IQuotationRecord): number => {
     return record.drawingDetails.reduce((totalWeight, drawing) => {
@@ -737,7 +955,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
 private handleDownloadSecondPDF = async (rfqNumber: string) => {
   try {
-    const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+    const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
 
     // Fetch RFQ details from SharePoint
     const rfqItems = await web.lists
@@ -880,11 +1098,6 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
   }
 };
 
-
-
-
-
-
   public render(): React.ReactElement<IQuotationScreenProps> {
     const { records, isEditing, currentRecord, selectedSerialNumber, showSubmitConfirm, showDeleteConfirm } = this.state;
 
@@ -981,17 +1194,15 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
                         <label>Part Name: <input type="text" value={part.partName} readOnly /></label>
                         <label>
   Grade/Material:
-  <select
-    name="grade"
-    value={part.grade}
-    onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} 
-  >
-    <option value="">Select Grade</option>
-    <option value="Steel">Steel</option>
-    <option value="Aluminium">Aluminium</option>
-    <option value="Plastic">Plastic</option>
-  </select>
+  <input
+    type="text"
+    name="material"
+    value={part.material || ""}
+    onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)}
+  />
 </label>
+
+
 
                         <label>Weight: <input type="text" name="weight" value={part.weight} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
                         <label>Over Head: <input type="text" name="overhead" value={part.overhead} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>

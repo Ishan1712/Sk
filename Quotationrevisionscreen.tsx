@@ -1,7 +1,6 @@
 import * as React from 'react';
 import styles from './Quotationrevisionscreen.module.scss';
 import { IQuotationrevisionscreenProps } from './IQuotationrevisionscreenProps';
-import { escape } from '@microsoft/sp-lodash-subset';
 import { Web }  from 'sp-pnp-js';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -15,7 +14,6 @@ declare module 'jspdf' {
 
 interface IPart {
   partName: string;
-  grade: string;
   weight: string;
   overhead: string;
   rate: string;
@@ -68,6 +66,18 @@ interface IQuotationRevisionScreenState {
   selectedDrawingIndex: number | null;
 }
 
+interface QuotationData {
+  id: number;
+  quotationDate: string;
+  serialNumber: string;
+  totalAmount: number;
+  totalRate: number;
+  totalWeight: number;
+  status: string;
+  revisionNumber: number;
+  reason?: string; 
+}
+
 export default class Quotationrevisionscreen extends React.Component<IQuotationrevisionscreenProps, IQuotationRevisionScreenState> {
   constructor(props: IQuotationrevisionscreenProps) {
     super(props);
@@ -83,7 +93,6 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
       selectedDrawingIndex: 0,
     };
   }
-
   private loadRFQNumbersFromSharePoint = async (): Promise<void> => {
     try {
       const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); 
@@ -99,6 +108,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
       console.error("Error loading RFQ numbers:", error);
     }
   };
+
   private fetchDrawingAndPartDetailsBySerialNumber = async (rfqNumber: string): Promise<IDrawing[]> => {
     try {
       const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
@@ -117,7 +127,6 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
         .select(
           "PartName",
           "Material",
-          "Grade",
           "Weight",
           "Overhead",
           "Rate",
@@ -136,7 +145,6 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
         partList: partItems.filter((part: any) => part.DrawingNumber === drawing.DrawingNumber).map((part: any) => ({
           partName: part.PartName,
           material: part.Material || "",
-          grade: part.Grade || "",
           weight: part.Weight || "",
           overhead: part.Overhead || "",
           rate: part.Rate || "",
@@ -145,7 +153,6 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
           primer: part.Primer || "",
         })),
       }));
-  
       console.log("Drawing and Part Details Fetched:", drawingDetails);
       return drawingDetails;
     } catch (error) {
@@ -153,41 +160,6 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
       return [];
     }
   };
-  
-  private fetchQuotationDetails = async (rfqNumber: string): Promise<{ 
-    quotationDate: string; 
-    totalWeight: number; 
-    totalRate: number; 
-    totalAmount: number; 
-    status: string; 
-  }> => {
-    try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); 
-  
-      const quotationItems = await web.lists
-        .getByTitle("QuotationList")
-        .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
-        .select("QuotationDate", "TotalWeight", "TotalRate", "TotalAmount", "Status")
-        .get();
-  
-      if (quotationItems.length > 0) {
-        const item = quotationItems[0];
-        return {
-          quotationDate: item.QuotationDate || "",
-          totalWeight: parseFloat(item.TotalWeight || "0"),
-          totalRate: parseFloat(item.TotalRate || "0"),
-          totalAmount: parseFloat(item.TotalAmount || "0"),
-          status: item.Status || "Pending",
-        };
-      }
-  
-      return { quotationDate: "", totalWeight: 0, totalRate: 0, totalAmount: 0, status: "Pending" };
-    } catch (error) {
-      console.error("Error fetching quotation details:", error);
-      return { quotationDate: "", totalWeight: 0, totalRate: 0, totalAmount: 0, status: "Pending" };
-    }
-  };
-  
   
   
   private fetchCustomerDetailsForSpecificRFQ = async (rfqNumber: string): Promise<ICustomerDetails | null> => {
@@ -258,7 +230,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
   
       // Update the part details
       await web.lists.getByTitle("PartList").items.getById(itemId).update({
-        Grade: updatedPart.grade,
+        Material: updatedPart.material,
         Weight: updatedPart.weight,
         Overhead: updatedPart.overhead,
         Rate: updatedPart.rate,
@@ -311,7 +283,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
           'DRG NO.',
           'ITEM',
           'QTY',
-          'GRADE',
+          'material',
           'WT',
           'OH',
           'T.WT',
@@ -348,7 +320,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
             '', // Blank DRG NO for parts
             part.partName,
             part.quantity,
-            part.grade,
+            part.material,
             part.weight,
             part.overhead,
             this.totalWeight(part).toFixed(2),
@@ -389,7 +361,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
         15, // DRG NO
         30, // ITEM
         15, // QTY
-        17, // GRADE
+        17, // material
         15, // WT
         15, // OH
         15, // T.WT
@@ -432,6 +404,10 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
     }
   };
 
+  public componentDidMount(): void {
+    this.loadRFQNumbersFromSharePoint(); // Call the method here
+  }
+  
   private handleDownloadSecondPDF = async (serialNumber: string) => {
     try {
       const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
@@ -562,7 +538,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
       // Add Closing Statement
       doc.setFontSize(11);
       doc.text("We hope that the above is as per your requirement.", 14, finalY + 90);
-      doc.text("Awaiting for your valued purchase order.", 14, finalY + 96);
+      doc.text("ARevised for your valued purchase order.", 14, finalY + 96);
   
       doc.setFontSize(12);
       doc.text("With kind regards,", 14, finalY + 110);
@@ -577,34 +553,100 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
     }
   };
 
-
-  private handleDownloadBothPDFs = async (serialNumber: string) => {
+  private fetchHighestRevisionRecord = async (rfqNumber: string, web: Web): Promise<QuotationData | null> => {
     try {
-      // Call the first PDF generation
-      await this.handleDownloadPDF(serialNumber);
+      // Fetch records from QuotationList
+      const quotationItems = await web.lists
+        .getByTitle("QuotationList")
+        .items.filter(`RFQSerialNumber eq '${rfqNumber}' and Status eq 'Revised'`)
+        .select("ID", "RFQSerialNumber", "RevisionNumber", "QuotationDate", "TotalAmount", "TotalRate", "TotalWeight", "Status","LossReason")
+        .get();
   
-      // Call the second PDF generation
-      await this.handleDownloadSecondPDF(serialNumber);
-      
-      alert("Both PDFs downloaded successfully.");
+      // Check for a record in QuotationList with RevisionNumber 0 and Status 'Revised'
+      const zeroRevisionItem = quotationItems.find((item: { 
+        RevisionNumber?: string; 
+        Status?: string; 
+      }) => parseInt(item.RevisionNumber || "0", 10) === 0 && item.Status === "Revised");
+  
+      if (zeroRevisionItem) {
+        // If a valid revision 0 item exists in QuotationList, return it directly
+        return {
+          id: zeroRevisionItem.ID,
+          serialNumber: zeroRevisionItem.RFQSerialNumber || "",
+          quotationDate: zeroRevisionItem.QuotationDate || "",
+          totalAmount: parseFloat(zeroRevisionItem.TotalAmount || "0"),
+          totalRate: parseFloat(zeroRevisionItem.TotalRate || "0"),
+          totalWeight: parseFloat(zeroRevisionItem.TotalWeight || "0"),
+          status: zeroRevisionItem.Status || "",
+          revisionNumber: 0,
+        };
+      }
+  
+      // Fetch records from QuotationRevision if no valid revision 0 is found
+      const revisionItems = await web.lists
+        .getByTitle("QuotationRevision")
+        .items.filter(`RFQSerialNumber eq '${rfqNumber}' and Statuss eq 'Revised'`)
+        .select("ID", "RFQSerialNumber", "RevisionNumber", "RevisionDate", "TotalAmount", "TotalRate", "TotalWeight", "Statuss")
+        .get();
+  
+      // Combine records and map to uniform structure
+      const allItems = [
+        ...quotationItems.map((item: any) => ({
+          ...item,
+          Status: item.Status, // Status is directly from QuotationList
+        })),
+        ...revisionItems.map((item: any) => ({
+          ...item,
+          Status: item.Statuss, // Map Statuss from QuotationRevision to Status
+        })),
+      ];
+  
+      // Find the highest revision number
+      let highestRecord: QuotationData | null = null;
+      let highestRevisionNumber = 0;
+  
+      allItems.forEach((item) => {
+        const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
+        if (revisionNumber > highestRevisionNumber) {
+          highestRevisionNumber = revisionNumber;
+          highestRecord = {
+            id: item.ID,
+            serialNumber: item.RFQSerialNumber || "",
+            quotationDate: item.QuotationDate || item.RevisionDate || "",
+            totalAmount: parseFloat(item.TotalAmount || "0"),
+            totalRate: parseFloat(item.TotalRate || "0"),
+            totalWeight: parseFloat(item.TotalWeight || "0"),
+            status: item.Status || "",
+            revisionNumber: revisionNumber,
+          };
+        }
+      });
+  
+      return highestRecord;
     } catch (error) {
-      console.error("Error downloading PDFs:", error);
-      alert("Failed to download PDFs. Please try again.");
+      console.error(`Error fetching highest revision record for RFQ ${rfqNumber}:`, error);
+      return null;
     }
   };
-    
-  public componentDidMount(): void {
-    this.loadRFQNumbersFromSharePoint();
-  }
-
+  
   private handleSerialNumberChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const serialNumber = e.target.value;
   
     if (!serialNumber) return;
   
     try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+  
+      // Fetch the highest revision record for the selected serial number
+      const highestRevisionRecord = await this.fetchHighestRevisionRecord(serialNumber, web);
+  
+      if (!highestRevisionRecord) {
+        alert("No data found for the selected RFQ number.");
+        return;
+      }
+  
+      // Fetch other details related to the serial number
       const drawingDetails = await this.fetchDrawingAndPartDetailsBySerialNumber(serialNumber);
-      const { quotationDate,totalWeight, totalRate, totalAmount, status } = await this.fetchQuotationDetails(serialNumber);
       const customerDetails = await this.fetchCustomerDetailsForSpecificRFQ(serialNumber);
   
       const currentDate = new Date().toISOString().split("T")[0];
@@ -617,7 +659,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
         }
       }
   
-      let updatedRecords = [...this.state.records];
+      const updatedRecords = [...this.state.records];
   
       if (existingRecordIndex >= 0) {
         // Update existing record
@@ -625,14 +667,12 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
           ...updatedRecords[existingRecordIndex],
           drawingDetails,
           customerDetails: customerDetails || updatedRecords[existingRecordIndex].customerDetails,
-          revisionNumber: (
-            parseInt(updatedRecords[existingRecordIndex].revisionNumber || "0") + 1
-          ).toString(),
-          quotationDate,
-          status,
-          totalweight: totalWeight,
-          totalRate: totalRate,
-          totalAmount: totalAmount,
+          revisionNumber: highestRevisionRecord.revisionNumber.toString(),
+          quotationDate: highestRevisionRecord.quotationDate,
+          status: highestRevisionRecord.status,
+          totalweight: highestRevisionRecord.totalWeight,
+          totalRate: highestRevisionRecord.totalRate,
+          totalAmount: highestRevisionRecord.totalAmount,
           revisionDate: currentDate,
         };
       } else {
@@ -641,14 +681,14 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
           id: updatedRecords.length + 1,
           serialNumber,
           rfqNumber: serialNumber,
-          revisionNumber: "1",
-          quotationDate,
+          revisionNumber: highestRevisionRecord.revisionNumber.toString(),
+          quotationDate: highestRevisionRecord.quotationDate,
           revisionDate: currentDate,
-          status,
+          status: highestRevisionRecord.status,
           drawingDetails,
-          totalweight: totalWeight,
-          totalRate: totalRate,
-          totalAmount: totalAmount,
+          totalweight: highestRevisionRecord.totalWeight,
+          totalRate: highestRevisionRecord.totalRate,
+          totalAmount: highestRevisionRecord.totalAmount,
           customerDetails: customerDetails || undefined,
         };
         updatedRecords.push(newRecord);
@@ -660,6 +700,21 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
       });
     } catch (error) {
       console.error("Error handling serial number change:", error);
+    }
+  };
+  
+  private handleDownloadBothPDFs = async (serialNumber: string) => {
+    try {
+      // Call the first PDF generation
+      this.handleDownloadPDF(serialNumber);
+  
+      // Call the second PDF generation
+      await this.handleDownloadSecondPDF(serialNumber);
+  
+      alert("Both PDFs downloaded successfully.");
+    } catch (error) {
+      console.error("Error downloading PDFs:", error);
+      alert("Failed to download PDFs. Please try again.");
     }
   };
   
@@ -675,68 +730,64 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
   private handleSubmitConfirm = (record: IQuotationRecord) => {
     this.setState({ showSubmitConfirm: true, recordToConfirm: record });
   };
+ private confirmSubmit = async (): Promise<void> => {
+  const { recordToConfirm, records } = this.state;
 
-  private confirmSubmit = async (): Promise<void> => {
-    const { recordToConfirm, records } = this.state;
-  
-    if (recordToConfirm) {
-      try {
-        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Add your SharePoint URL here
-  
-        // Fetch the quotation record by RFQNumber
-        const quotationItems = await web.lists
-          .getByTitle("QuotationList")
-          .items.filter(`RFQSerialNumber eq '${recordToConfirm.rfqNumber}'`)
-          .select("Id")
-          .get();
-  
-        if (quotationItems.length > 0) {
-          const quotationItemId = quotationItems[0].Id;
-  
-          // Update the status to "WorkingDone" in the QuotationList
-          await web.lists.getByTitle("QuotationList").items.getById(quotationItemId).update({
-            Status: "WorkingDone",
-          });
-  
-          // Fetch the RFQ item ID from the RFQList using the RFQNumber
-          const rfqItems = await web.lists
-            .getByTitle("RFQList")
-            .items.filter(`RFQNumber eq '${recordToConfirm.rfqNumber}'`)
-            .select("Id")
-            .get();
-  
-          if (rfqItems.length > 0) {
-            const rfqItemId = rfqItems[0].Id;
-  
-            // Update the status to "WorkingDone" in the RFQList
-            await web.lists.getByTitle("RFQList").items.getById(rfqItemId).update({
-              Status: "WorkingDone",
-            });
-          }
-  
-          // Update local state
-          const updatedRecords = records.map((rec) =>
-            rec.id === recordToConfirm.id ? { ...rec, status: "WorkingDone" } : rec
-          );
-  
-          this.setState({
-            records: updatedRecords,
-            showSubmitConfirm: false,
-            recordToConfirm: null,
-          });
-  
-          alert(`Quotation status updated to "WorkingDone" successfully.`);
-        } else {
-          alert("Quotation record not found in the SharePoint list.");
-        }
-      } catch (error) {
-        console.error("Error updating quotation status:", error);
-        alert("Failed to update the quotation status. Please try again.");
+  if (recordToConfirm) {
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+
+      // Step 1: Update the status in the QuotationList
+      const quotationItems = await web.lists
+        .getByTitle("QuotationList")
+        .items.filter(`RFQSerialNumber eq '${recordToConfirm.rfqNumber}'`)
+        .select("Id")
+        .get();
+
+      if (quotationItems.length > 0) {
+        const itemId = quotationItems[0].Id;
+
+        await web.lists.getByTitle("QuotationList").items.getById(itemId).update({
+          Status: "WorkingDone",
+        });
       }
+
+      // Step 2: Update the status in the RFQList
+      const rfqItems = await web.lists
+        .getByTitle("RFQList")
+        .items.filter(`RFQNumber eq '${recordToConfirm.rfqNumber}'`)
+        .select("Id")
+        .get();
+
+      if (rfqItems.length > 0) {
+        const itemId = rfqItems[0].Id;
+
+        await web.lists.getByTitle("RFQList").items.getById(itemId).update({
+          Status: "WorkingDone",
+        });
+      }
+
+      // Step 3: Update the local state
+      const updatedRecords = records.map((rec) =>
+        rec.id === recordToConfirm.id
+          ? { ...rec, status: "WorkingDone" }
+          : rec
+      );
+
+      this.setState({
+        records: updatedRecords,
+        showSubmitConfirm: false,
+        recordToConfirm: null,
+      });
+
+      alert(`Statuses in QuotationList and RFQList updated to "WorkingDone".`);
+    } catch (error) {
+      console.error("Error updating statuses in QuotationList and RFQList:", error);
+      alert("Failed to update statuses. Please try again.");
     }
-  };
-  
-  
+  }
+};
+
 
   private cancelSubmit = () => {
     this.setState({ showSubmitConfirm: false, recordToConfirm: null });
@@ -762,53 +813,93 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
     const { currentRecord, records } = this.state;
   
     if (currentRecord) {
-      const rfqNumber = currentRecord.rfqNumber;
-  
       try {
+      const rfqNumber = currentRecord.rfqNumber;
+
+
+      // Step 1: Recalculate totals for the updated part details
+      currentRecord.totalweight = currentRecord.drawingDetails.reduce((totalWeight, drawing) => {
+        return totalWeight + drawing.partList.reduce((partWeight, part) => {
+          return partWeight + this.totalWeight(part);
+        }, 0);
+      }, 0);
+
+      currentRecord.totalRate = currentRecord.drawingDetails.reduce((totalRate, drawing) => {
+        return totalRate + drawing.partList.reduce((partRate, part) => {
+          return partRate + this.totalRate(part);
+        }, 0);
+      }, 0);
+
+      currentRecord.totalAmount = currentRecord.drawingDetails.reduce((totalAmount, drawing) => {
+        return totalAmount + drawing.partList.reduce((partAmount, part) => {
+          return partAmount + this.calculatePartTotal(part);
+        }, 0);
+      }, 0);
+  
         const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); 
   
-        // Update QuotationList
-        const quotationItems = await web.lists
-          .getByTitle("QuotationList")
-          .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
-          .select("Id")
-          .get();
+        // === Step 1: Update the QuotationList ==
+          const quotationItems = await web.lists
+            .getByTitle("QuotationList")
+            .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
+            .select("Id")
+            .get();
   
-        if (quotationItems.length > 0) {
-          const itemId = quotationItems[0].Id;
-          await web.lists.getByTitle("QuotationList").items.getById(itemId).update({
-            QuotationDate: currentRecord.quotationDate,
-            RevisionNumber: currentRecord.revisionNumber,
-          });
-        }
-  
-        // Update PartList using updatePartDetailsInList
-        for (const drawing of currentRecord.drawingDetails) {
-          for (const part of drawing.partList) {
-            await this.updatePartDetailsInList(rfqNumber, part.partName, {
-              grade: part.grade,
-              weight: part.weight,
-              overhead: part.overhead,
-              rate: part.rate,
-              labour: part.labour,
-              laserCut: part.laserCut,
-              primer: part.primer,
+          if (quotationItems.length > 0) {
+            const itemId = quotationItems[0].Id;
+            await web.lists.getByTitle("QuotationList").items.getById(itemId).update({
+           
+              RevisionNumber: currentRecord.revisionNumber,
+             
             });
+          } else {
+            console.warn(`No item found in QuotationList for RFQ: ${rfqNumber}`);
           }
-        }
   
-        // Update local state
+        // === Step 2: Update the PartList ===
+          for (const drawing of currentRecord.drawingDetails) {
+            for (const part of drawing.partList) {
+              await this.updatePartDetailsInList(rfqNumber, part.partName, {
+                material: part.material,
+                weight: part.weight,
+                overhead: part.overhead,
+                rate: part.rate,
+                labour: part.labour,
+                laserCut: part.laserCut,
+                primer: part.primer,
+              });
+            }
+          }
+          await web.lists.getByTitle("QuotationRevision").items.add({
+            Title: `Revision for RFQ: ${rfqNumber}`,
+            RFQSerialNumber: rfqNumber,
+            RevisionNumber: parseInt(currentRecord.revisionNumber), // Convert to number   
+            RevisionDate: new Date(currentRecord.revisionDate).toISOString(), // Convert to ISO format
+            TotalWeight: currentRecord.totalweight, // Number
+            TotalRate: currentRecord.totalRate, // Number
+            TotalAmount: currentRecord.totalAmount,
+            Statuss: "WorkingDone", // Number
+          });
+  
+        // === Step 4: Update Local State ===
         const updatedRecords = records.map((record) =>
           record.id === currentRecord.id ? currentRecord : record
         );
-        this.setState({ records: updatedRecords, isEditing: false, currentRecord: null });
-        alert("Changes saved successfully!");
+  
+        this.setState({
+          records: updatedRecords,
+          isEditing: false,
+          currentRecord: null,
+        });
+  
+        alert("Changes saved successfully! A new revision has been recorded.");
+  
       } catch (error) {
-        console.error("Error saving edits:", error.message || error);
-        alert(`Failed to save changes: ${error.message || error}`);
+        console.error("Error in saveEdit:", error.message || error);
+        alert(`Error saving changes: ${error.message || "Unknown error occurred."}`);
       }
     }
-  };
+  };  
   
   
   private cancelEdit = () => {
@@ -875,59 +966,37 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
     return rate + labour + laserCut + primer;
   };
 
-  private calculateTotalWeight = (record: IQuotationRecord): number => {
-    return record.drawingDetails.reduce((totalWeight, drawing) => {
-      return totalWeight + drawing.partList.reduce((partWeight, part) => {
-        return partWeight + this.totalWeight(part);
-      }, 0);
-    }, 0);
-  };
 
-  private calculateTotalRate = (record: IQuotationRecord): number => {
-    return record.drawingDetails.reduce((totalRate, drawing) => {
-      return totalRate + drawing.partList.reduce((partRate, part) => {
-        return partRate + this.totalRate(part);
-      }, 0);
-    }, 0);
-  };
-
-  private calculateTotalAmount = (record: IQuotationRecord): number => {
-    return record.drawingDetails.reduce((totalAmount, drawing) => {
-      return totalAmount + drawing.partList.reduce((partAmount, part) => {
-        return partAmount + this.calculatePartTotal(part);
-      }, 0);
-    }, 0);
-  };
 
   public render(): React.ReactElement<IQuotationrevisionscreenProps> {
     const { records, isEditing, currentRecord, selectedSerialNumber, showSubmitConfirm, showDeleteConfirm } = this.state;
 
     return (
       <section className={styles.quotationrevisionscreen}>
-        <h2>Quotation Revision Screen</h2>
-        <div className={styles.rfqBox}>
-  <label htmlFor="rfqSelect">Select RFQ Serial Number:</label>
-  <select
-    id="rfqSelect"
-    value={this.state.selectedSerialNumber}
-    onChange={this.handleSerialNumberChange}
-  >
-    <option value="">Select...</option>
-    {this.state.rfqNumbers.map((rfqNumber, index) => (
-      <option key={index} value={rfqNumber}>
-        {rfqNumber}
-      </option>
-    ))}
-  </select>
-</div>
-
-
-
+      <h2>Quotation Revision Management Screen</h2>
+      <div className={styles.dropdownBox}>
+        <label htmlFor="serialNumber" className={styles.dropdownLabel}>
+          Select Serial Number:
+        </label>
+        <select
+          id="serialNumber"
+          className={styles.selectDropdown}
+          value={this.state.selectedSerialNumber}
+          onChange={this.handleSerialNumberChange}
+        >
+          <option value="">Select...</option>
+          {this.state.rfqNumbers.map((rfqNumber, index) => (
+            <option key={index} value={rfqNumber}>
+              {rfqNumber}
+            </option>
+          ))}
+        </select>
+      </div>
 
         {showSubmitConfirm && (
           <div className={styles.confirmOverlay}>
             <div className={styles.confirmBox}>
-              <p>Are you sure you haved Revised this data?</p>
+              <p>Are you sure you have updated the data ?</p>
               <button onClick={this.confirmSubmit} className={styles.confirmButton}>Yes</button>
               <button onClick={this.cancelSubmit} className={styles.cancelButton}>No</button>
             </div>
@@ -949,10 +1018,16 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
             <div className={styles.editBox}>
               <h3>Edit Record</h3>
               <div>
-                <label>
-                  Quotation Date:
-                  <input type="date" name="quotationDate" value={currentRecord.quotationDate} onChange={this.handleChange} />
-                </label>
+              <label>
+  Quotation Date:
+  <input
+    type="date"
+    name="quotationDate"
+    value={currentRecord?.quotationDate || ""}
+    onChange={this.handleChange}
+  />
+</label>
+
                 <label>
                 <label>
                   Revision Date:
@@ -974,7 +1049,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
                   currentRecord.drawingDetails[this.state.selectedDrawingIndex].partList.map((part, pIndex) => (
                     <div key={pIndex} className={styles.partEdit}>
                       <label>Part Name: <input type="text" value={part.partName} readOnly /></label>
-                      <label>Grade: <input type="text" name="grade" value={part.grade} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
+                      <label>Material/Grade: <input type="text" name="material" value={part.material} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
                       <label>Weight: <input type="text" name="weight" value={part.weight} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
                       <label>Overhead: <input type="text" name="overhead" value={part.overhead} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
                       <label>Rate: <input type="text" name="rate" value={part.rate} onChange={(e) => this.handleChange(e, this.state.selectedDrawingIndex!, pIndex)} /></label>
@@ -1034,7 +1109,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
               {drawing.partList.map((part, pIndex) => (
                 <li key={pIndex}>
                   <strong>{part.partName}</strong> - 
-                  Grade: {part.grade}, 
+                  material: {part.material}, 
                   Weight: {part.weight}, 
                   Overhead: {part.overhead}, 
                   Rate: {part.rate}, 
@@ -1072,7 +1147,7 @@ export default class Quotationrevisionscreen extends React.Component<IQuotationr
               onClick={() => this.handleSubmitConfirm(record)}
               className={styles.submitButton}
             >
-              Revised
+              Add Revised Data
             </button>
             <button
               onClick={() => this.handleDeleteConfirm(record)}

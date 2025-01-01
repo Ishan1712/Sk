@@ -531,6 +531,27 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
       alert('Failed to delete RFQ. Please try again.');
     }
   };
+  private handlePartSelection = async (selectedPartName: string): Promise<void> => {
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Replace with your SharePoint site URL
+      const items = await web.lists
+        .getByTitle('MaterialList')
+        .items.filter(`PartNumber eq '${selectedPartName}'`) // Query for the selected part
+        .select('Material') // Fetch the Material column
+        .get();
+  
+      if (items.length > 0) {
+        const material = items[0].Material || ''; // Get the material for the selected part
+        this.setState({ partName: selectedPartName, material }); // Update the state
+      } else {
+        alert('Material not found for the selected part.');
+        this.setState({ partName: selectedPartName, material: '' }); // Reset the material field if not found
+      }
+    } catch (error) {
+      console.error('Error fetching material:', error);
+      alert('Failed to fetch material. Please try again.');
+    }
+  };
   
 
   public render(): React.ReactElement {
@@ -541,7 +562,6 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
       date,
       drawingQuantity,
       drawingNumber,
-      material,
       quantity,
       rfqList,
       // drawingList,
@@ -557,11 +577,6 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
       editDate,
     } = this.state;
 
-    const materialOptions: IDropdownOption[] = [
-      { key: 'Aluminum', text: 'Aluminum' },
-      { key: 'Steel', text: 'Steel' },
-      { key: 'Plastic', text: 'Plastic' },
-    ];
 
     return (
       <section className={styles.rfqScreen}>
@@ -611,19 +626,22 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
             title: 'Add Part',
           }}
         >
-         <Dropdown
-            label="Part Name"
-            selectedKey={this.state.partName}
-            onChange={(e, option) => this.setState({ partName: option?.key as string })}
-            options={this.state.partNameOptions}
-          />
+      <Dropdown
+        label="Part Name"
+        selectedKey={this.state.partName}
+        onChange={(e, option) => {
+          if (option?.key) {
+            this.handlePartSelection(option.key as string); // Fetch the material and update the form
+          }
+        }}
+        options={this.state.partNameOptions}
+      />
 
-          <Dropdown
-            label="Material/grade"
-            selectedKey={material} // Use the state variable to track the selected material
-            onChange={(e, option) => this.setMaterial(option?.key as string)} // Update the state when selection changes
-            options={materialOptions}
-          />
+        <TextField
+          label="Material/grade"
+          value={this.state.material} // Bind to the state
+          onChange={(e, newValue) => this.setMaterial(newValue || '')} // Allow manual editing if necessary
+        />
           <TextField label="Quantity" value={quantity} onChange={(e, newValue) => this.setQuantity(newValue || '')} />
           <DialogFooter>
             <PrimaryButton text="Submit Part" onClick={this.addPart} />

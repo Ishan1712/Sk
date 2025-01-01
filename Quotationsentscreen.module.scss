@@ -1,6 +1,5 @@
-@import '~office-ui-fabric-react/dist/sass/References.scss';
-
-.quotationresultscreen {
+@import '~@fluentui/react/dist/sass/References.scss';
+.quotationsentscreen {
   padding: 1em;
   color: "[theme:bodyText, default: #323130]";
   color: var(--bodyText);
@@ -32,39 +31,41 @@
       background-color: #e9f1fb;
     }
   }
-h2{
-  text-align: center;
-}
+
   /* Button Styling */
-  .wonButton, .lossButton {
+  .submitButton, .deleteButton {
     padding: 8px 12px;
     border-radius: 4px;
     border: none;
     cursor: pointer;
     margin: 5px;
     transition: background-color 0.3s ease;
-    font-size: 12px;
-    font-weight: bold;
-    width: 60px;
-    color: white;
   }
 
-  .wonButton {
-    background-color: #4caf50; /* Green for Won */
+  .submitButton {
+    background-color: #4caf50;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 125px;
   
     &:hover {
       background-color: #45a049;
     }
   }
 
-  .lossButton {
-    background-color: #f44336; /* Red for Loss */
+  .deleteButton {
+    background-color: #f44336;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 125px;
   
     &:hover {
       background-color: #d32f2f;
     }
   }
-
+  
   .confirmButton {
     background-color: #4caf50;
     color: white;
@@ -95,86 +96,23 @@ h2{
     }
   }
 
-  /* Action Buttons Spacing */
-  .action-button {
-    margin-right: 5px;
-    padding: 5px 10px;
-  }
-
-  /* Actions Column Width */
-  .actionsColumn {
-    width: 200px;
-  }
-
-  /* Row Height Adjustment */
-  .quotation-row td {
-    padding: 10px;
-  }
-
-  .dropdown {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-  
-    &:focus {
-      border-color: #0078d4;
-      outline: none;
+    /* Action Buttons Spacing */
+    .action-button {
+      margin-right: 5px;
+      padding: 5px 10px;
     }
-  }
   
-  .modalActions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-  
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
-  
-      &.confirm {
-        background-color: #4caf50;
-  
-        &:hover {
-          background-color: #45a049;
-        }
-      }
-  
-      &.cancel {
-        background-color: #f44336;
-  
-        &:hover {
-          background-color: #d32f2f;
-        }
-      }
+    /* Actions Column Width */
+    .actionsColumn {
+      width: 200px;
     }
-  }
   
-  .submitButton {
-    background-color: #2196f3;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 15px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  
-    &:hover {
-      background-color: #1976d2;
+    /* Row Height Adjustment */
+    .quotation-row td {
+      padding: 10px;
     }
-  }
-  
 
-  /* Modal (Alert Message) Styling */
+    /* Modal (Alert Message) Styling */
   .modal {
     position: fixed;
     top: 0;
@@ -283,21 +221,4 @@ h2{
   ::-webkit-scrollbar-track {
     background-color: #f1f1f1; /* Scrollbar track color */
   }
-}
-
-.reviseButton {
-  background-color: #ffa500; /* Example orange color */
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  margin: 5px;
-  transition: background-color 0.3s ease;
-  font-size: 12px;
-  font-weight: bold;
-  width: 60px;
-  color: white;
-}
-.reviseButton:hover {
-  background-color: #cc8400; /* Darker shade of orange */
 }

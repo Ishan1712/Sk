@@ -1,6 +1,6 @@
-@import '~office-ui-fabric-react/dist/sass/References.scss';
+@import '~@fluentui/react/dist/sass/References.scss';
 
-.quotationresultscreen {
+.quorevisionscreen {
   padding: 1em;
   color: "[theme:bodyText, default: #323130]";
   color: var(--bodyText);
@@ -32,66 +32,35 @@
       background-color: #e9f1fb;
     }
   }
-h2{
-  text-align: center;
-}
+
   /* Button Styling */
-  .wonButton, .lossButton {
-    padding: 8px 12px;
-    border-radius: 4px;
+  .submitButton, .deleteButton {
+    padding: 8px 10px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    margin: 5px;
-    transition: background-color 0.3s ease;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
-    width: 60px;
-    color: white;
+    margin: 5px;
   }
 
-  .wonButton {
-    background-color: #4caf50; /* Green for Won */
-  
-    &:hover {
-      background-color: #45a049;
-    }
-  }
-
-  .lossButton {
-    background-color: #f44336; /* Red for Loss */
-  
-    &:hover {
-      background-color: #d32f2f;
-    }
-  }
-
-  .confirmButton {
+  .submitButton {
     background-color: #4caf50;
     color: white;
-    font-weight: bold;
-  
+    transition: background-color 0.3s ease;
+
     &:hover {
       background-color: #45a049;
     }
   }
-  
-  .cancelButton {
+
+  .deleteButton {
     background-color: #f44336;
     color: white;
-    font-weight: bold;
-  
+    transition: background-color 0.3s ease;
+
     &:hover {
       background-color: #d32f2f;
-    }
-  }
-  
-  .saveButton {
-    background-color: #2196f3;
-    color: white;
-    font-weight: bold;
-  
-    &:hover {
-      background-color: #1976d2;
     }
   }
 
@@ -110,69 +79,6 @@ h2{
   .quotation-row td {
     padding: 10px;
   }
-
-  .dropdown {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-  
-    &:focus {
-      border-color: #0078d4;
-      outline: none;
-    }
-  }
-  
-  .modalActions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-  
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
-  
-      &.confirm {
-        background-color: #4caf50;
-  
-        &:hover {
-          background-color: #45a049;
-        }
-      }
-  
-      &.cancel {
-        background-color: #f44336;
-  
-        &:hover {
-          background-color: #d32f2f;
-        }
-      }
-    }
-  }
-  
-  .submitButton {
-    background-color: #2196f3;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 15px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  
-    &:hover {
-      background-color: #1976d2;
-    }
-  }
-  
 
   /* Modal (Alert Message) Styling */
   .modal {
@@ -255,20 +161,38 @@ h2{
       outline: none;
     }
   }
+
+ /* Styling for TextArea */
+ .textArea {
+  width: 100%;
+  height: 80px;
+  margin: 10px 0;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease;
+
+  &:focus {
+    border: 1px solid #0078d4;
+    outline: none;
+  }
+}
 }
 
 .scrollableContainer {
-  max-height: 400px; /* Limit vertical height */
+  max-height: 400px; /* Set vertical height limit */
   max-width: 100%; /* Allow full width for horizontal scrolling */
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: auto; /* Enable horizontal scrollbar */
+  overflow-y: auto; /* Enable vertical scrollbar */
   border: 1px solid #ddd; /* Optional: Add border for clarity */
   padding: 10px; /* Optional: Add padding for better visuals */
 
   /* Optional: Style the scrollbars */
   ::-webkit-scrollbar {
-    width: 8px; /* Width of vertical scrollbar */
-    height: 8px; /* Height of horizontal scrollbar */
+    width: 8px; /* Vertical scrollbar width */
+    height: 8px; /* Horizontal scrollbar height */
   }
 
   ::-webkit-scrollbar-thumb {
@@ -277,27 +201,10 @@ h2{
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #005a9e; /* Darker thumb on hover */
+    background-color: #005a9e; /* Darker color on hover */
   }
 
   ::-webkit-scrollbar-track {
-    background-color: #f1f1f1; /* Scrollbar track color */
+    background-color: #f1f1f1; /* Track color */
   }
-}
-
-.reviseButton {
-  background-color: #ffa500; /* Example orange color */
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  margin: 5px;
-  transition: background-color 0.3s ease;
-  font-size: 12px;
-  font-weight: bold;
-  width: 60px;
-  color: white;
-}
-.reviseButton:hover {
-  background-color: #cc8400; /* Darker shade of orange */
 }
