@@ -1,290 +1,359 @@
 import * as React from 'react';
+import { useState, useEffect ,useMemo } from 'react';
 import styles from './PoScreen.module.scss';
 import { IPoScreenProps } from './IPoScreenProps';
-import { escape } from '@microsoft/sp-lodash-subset';
 import { Web } from 'sp-pnp-js';
 
 interface IPORecord {
+  id: number;
   serialNumber: string;
   rfqNumber: string;
   totalRate: number;
   totalWeight: number;
   totalAmount: number;
-  poNumber?: string; // Optional initially until set
+  poNumber?: string;
   poDate?: string;
   rateByCustomer?: string;
+  pdfUrl?: string;
+  uploading?: boolean;
+  revisionNumber?: number;
 }
 
-interface IPOscreenState {
-  serialNumbers: string[];
-  selectedSerialNumber: string;
-  recordDetails: IPORecord | null;
-  showPOForm: boolean;
-  poNumber: string;
-  poDate: string;
-  rateByCustomer: string;
-}
+const fetchHighestRevisionRecord = async (rfqNumber: string, web: Web): Promise<IPORecord | null> => {
+  try {
+    const quotationItems = await web.lists
+      .getByTitle("QuotationList")
+      .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
+      .select("ID", "RFQSerialNumber", "RevisionNumber", "TotalAmount", "TotalRate", "TotalWeight", "Status")
+      .get();
 
-export default class PoScreen extends React.Component<IPoScreenProps, IPOscreenState> {
-  constructor(props: IPoScreenProps) {
-    super(props);
+    const revisionItems = await web.lists
+      .getByTitle("QuotationRevision")
+      .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
+      .select("ID", "RFQSerialNumber", "RevisionNumber", "RevisionDate", "TotalAmount", "TotalRate", "TotalWeight", "Statuss")
+      .get();
 
-    this.state = {
-      serialNumbers: [],
-      selectedSerialNumber: '',
-      recordDetails: null,
-      showPOForm: false,
-      poNumber: '',
-      poDate: '',
-      rateByCustomer: '',
-    };
-  }
+    let highestRevisionNumber = 0;
+    let highestSource = "QuotationList";
 
-  public componentDidMount(): void {
-    this.fetchSerialNumbers();
-  }
-
-  private fetchSerialNumbers = async (): Promise<void> => {
-    try {
-      // Replace with the correct URL for your SharePoint site
-     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Specify your SharePoint site URL here.
-  
-      // Fetch RFQ serial numbers where Status is 'Won'
-      const items = await web.lists
-        .getByTitle('QuotationList')
-        .items.filter("Status eq 'Won'") // Filter by Status = 'Won'
-        .select('RFQSerialNumber')
-        .get();
-  
-      const serialNumbers = items.map((item: any) => item.RFQSerialNumber);
-      this.setState({ serialNumbers });
-      console.log("Fetched serial numbers with Status 'Won'");
-    } catch (error) {
-      console.error('Error fetching serial numbers:', error);
-    }
-  };
-  
-
-  private handleSerialNumberChange = async (event: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
-    const selectedSerialNumber = event.target.value;
-
-    if (!selectedSerialNumber) {
-      this.setState({ recordDetails: null, selectedSerialNumber: '' });
-      return;
-    }
-
-    try {
-     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); // Specify your SharePoint site URL here.
-
-      // Fetch record details from the QuotationList
-      const rfqItems = await web.lists
-        .getByTitle('QuotationList')
-        .items.filter(`RFQSerialNumber eq '${selectedSerialNumber}'`)
-        .select('RFQSerialNumber', 'TotalRate', 'TotalWeight', 'TotalAmount')
-        .get();
-
-      // Fetch PO details from the POList
-      const poItems = await web.lists
-        .getByTitle('POList')
-        .items.filter(`SerialNumber eq '${selectedSerialNumber}'`)
-        .select('PONumber', 'PODate', 'RateByCustomer')
-        .get();
-
-      if (rfqItems.length > 0) {
-        // Correct field mapping
-        const { RFQSerialNumber, TotalRate, TotalWeight, TotalAmount } = rfqItems[0];
-
-        const poDetails = poItems.length > 0 ? poItems[0] : null;
-
-        const recordDetails: IPORecord = {
-          serialNumber: selectedSerialNumber,
-          rfqNumber: RFQSerialNumber, // Correct field
-          totalRate: TotalRate,
-          totalWeight: TotalWeight,
-          totalAmount: TotalAmount,
-          poNumber: poDetails?.PONumber || 'N/A',
-          poDate: poDetails?.PODate || 'N/A',
-          rateByCustomer: poDetails?.RateByCustomer || 'N/A',
-        };
-
-        this.setState({ recordDetails, selectedSerialNumber });
-      } else {
-        this.setState({ recordDetails: null, selectedSerialNumber });
+    quotationItems.forEach((item) => {
+      const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
+      if (revisionNumber > highestRevisionNumber) {
+        highestRevisionNumber = revisionNumber;
+        highestSource = "QuotationList";
       }
-    } catch (error) {
-      console.error('Error fetching record or PO details:', error);
-    }
-  };
-
-
-  private openPOForm = (): void => {
-    this.setState({ showPOForm: true });
-  };
-
-  private closePOForm = (): void => {
-    this.setState({
-      showPOForm: false,
-      poNumber: '',
-      poDate: '',
-      rateByCustomer: '',
     });
-  };
 
-  private handlePOFormChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    revisionItems.forEach((item) => {
+      const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
+      if (revisionNumber > highestRevisionNumber) {
+        highestRevisionNumber = revisionNumber;
+        highestSource = "QuotationRevision";
+      }
+    });
+
+    let highestRevisionItem = null;
+
+    if (highestSource === "QuotationList") {
+      highestRevisionItem = quotationItems.find(
+        (item) => parseInt(item.RevisionNumber || "0", 10) === highestRevisionNumber
+      );
+    } else {
+      highestRevisionItem = revisionItems.find(
+        (item) => parseInt(item.RevisionNumber || "0", 10) === highestRevisionNumber
+      );
+    }
+
+    if (highestRevisionItem) {
+      return {
+        id: highestRevisionItem.ID,
+        serialNumber: highestRevisionItem.RFQSerialNumber || "",
+        rfqNumber: highestRevisionItem.RFQSerialNumber || "",
+        totalRate: parseFloat(highestRevisionItem.TotalRate || "0"),
+        totalWeight: parseFloat(highestRevisionItem.TotalWeight || "0"),
+        totalAmount: parseFloat(highestRevisionItem.TotalAmount || "0"),
+        revisionNumber: highestRevisionNumber,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching highest revision record for RFQ ${rfqNumber}:`, error);
+    return null;
+  }
+};
+
+const POscreen: React.FC<IPoScreenProps> = (props) => {
+  const [records, setRecords] = useState<IPORecord[]>([]);
+  const [recordDetails, setRecordDetails] = useState<IPORecord | null>(null);
+  const [showPOForm, setShowPOForm] = useState(false);
+  const [poNumber, setPoNumber] = useState('');
+  const [poDate, setPoDate] = useState('');
+  const [rateByCustomer, setRateByCustomer] = useState('');
+
+  useEffect(() => {
+    const fetchAllHighestRevisions = async () => {
+      try {
+        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+
+        const quotationItems = await web.lists
+          .getByTitle("QuotationList")
+          .items.filter("Status eq 'Won'")
+          .select("RFQSerialNumber")
+          .get();
+
+        const revisionItems = await web.lists
+          .getByTitle("QuotationRevision")
+          .items.filter("Statuss eq 'Won'")
+          .select("RFQSerialNumber")
+          .get();
+
+        const rfqSerialNumbers = [
+          ...quotationItems.map((item) => item.RFQSerialNumber),
+          ...revisionItems.map((item) => item.RFQSerialNumber),
+        ].filter((value, index, self) => self.indexOf(value) === index);
+
+        const updatedRecords = await Promise.all(
+          rfqSerialNumbers.map(async (rfqNumber) => {
+            return await fetchHighestRevisionRecord(rfqNumber, web);
+          })
+        );
+
+        setRecords(updatedRecords.filter((record): record is IPORecord => record !== null));
+      } catch (error) {
+        console.error("Error fetching highest revisions:", error);
+      }
+    };
+
+    fetchAllHighestRevisions();
+  }, []);
+
+  const handlePOFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    this.setState({ [name]: value } as any);
+    if (name === 'poNumber') setPoNumber(value);
+    if (name === 'poDate') setPoDate(value);
+    if (name === 'rateByCustomer') setRateByCustomer(value);
   };
 
-  private savePO = async (): Promise<void> => {
-    const { poNumber, poDate, rateByCustomer, selectedSerialNumber } = this.state;
-  
-    if (!poNumber || !poDate || !rateByCustomer) {
+  const savePO = async () => {
+    if (!poNumber || !poDate || !rateByCustomer || !recordDetails) {
       alert('Please fill all fields.');
       return;
     }
-  
+
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Specify your SharePoint site URL here.
-  
-      // Check if a record already exists for the selected RFQ number
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+
       const existingPO = await web.lists
         .getByTitle('POList')
-        .items.filter(`SerialNumber eq '${selectedSerialNumber}'`)
+        .items.filter(`SerialNumber eq '${recordDetails.serialNumber}'`)
         .get();
-  
+
       if (existingPO.length > 0) {
-        // Update existing record
         await web.lists
           .getByTitle('POList')
-          .items.getById(existingPO[0].Id) // Use the ID of the existing record
+          .items.getById(existingPO[0].ID)
           .update({
             PONumber: poNumber,
             PODate: poDate,
             RateByCustomer: rateByCustomer,
           });
-  
+
         alert('PO updated successfully.');
       } else {
-        // Create a new record
         await web.lists
           .getByTitle('POList')
           .items.add({
             PONumber: poNumber,
             PODate: poDate,
             RateByCustomer: rateByCustomer,
-            SerialNumber: selectedSerialNumber,
+            SerialNumber: recordDetails.serialNumber,
           });
-  
+
         alert('PO created successfully.');
       }
-  
-      // Update recordDetails in the state
-      this.setState((prevState) => ({
-        recordDetails: {
-          ...prevState.recordDetails,
-          poNumber,
-          poDate,
-          rateByCustomer,
-        } as IPORecord,
-      }));
-  
-      this.closePOForm();
+
+      setShowPOForm(false);
     } catch (error) {
       console.error('Error saving PO:', error);
       alert('Failed to save PO. Please try again.');
     }
   };
+  useMemo(async () => {
+    if (records.length === 0) return;
 
-  public render(): React.ReactElement<IPoScreenProps> {
-    const { serialNumbers, selectedSerialNumber, recordDetails, showPOForm, poNumber, poDate, rateByCustomer } = this.state;
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
 
-    return (
-      <section className={styles.pOscreen}>
-        <h2>PO Management Screen</h2>
-        <div className={styles.dropdownWrapper}>
-        <label 
-          htmlFor="rfqSerialNumber" 
-          className={styles.dropdownLabel}
-        >
-          Select RFQ Serial Number:
-        </label>
-        <select 
-          id="rfqSerialNumber" 
-          value={selectedSerialNumber} 
-          onChange={this.handleSerialNumberChange} 
-          className={styles.dropdownSelect}
-        >
-          <option value="">Select...</option>
-          {serialNumbers.map((serial, index) => (
-            <option key={index} value={serial}>
-              {serial}
-            </option>
-          ))}
-        </select>
-      </div>
+      const rfqSerialNumbers = records.map((record) => record.serialNumber);
+      // console.log("Hooked called of " ,rfqSerialNumbers )
+      const poItems = await web.lists
+        .getByTitle('POList')
+        .items.filter(rfqSerialNumbers.map(num => `SerialNumber eq '${num}'`).join(' or '))
+        .expand('AttachmentFiles')
+        .select('ID', 'SerialNumber', 'PONumber', 'PODate', 'RateByCustomer', 'AttachmentFiles')
+        .get();
+        // console.log("List accessed ",poItems)
+      const updatedRecords = records.map((record) => {
+        const poItem = poItems.find((po) => po.SerialNumber === record.serialNumber);
 
-      {recordDetails && (
-      <div className={styles.tableWrapper}>
-        <table className={styles.detailsTable}>
-          <thead>
-            <tr>
-              <th>RFQ Number</th>
-              <th>Total Rate</th>
-              <th>Total Weight</th>
-              <th>Total Amount</th>
-              <th>PO Number</th>
-              <th>PO Date</th>
-              <th>Final Rate by Customer</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{recordDetails.rfqNumber}</td>
-              <td>{recordDetails.totalRate}</td>
-              <td>{recordDetails.totalWeight}</td>
-              <td>{recordDetails.totalAmount}</td>
-              <td>{recordDetails.poNumber}</td>
-              <td>{recordDetails.poDate}</td>
-              <td>{recordDetails.rateByCustomer}</td>
-              <td>
-                <button
-                  onClick={this.openPOForm}
-                  className={`${styles.addButton}`}
-                >
-                  Add PO
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    )}
+        if (poItem) {
+          return {
+            ...record,
+            poNumber: poItem.PONumber,
+            poDate: poItem.PODate,
+            rateByCustomer: poItem.RateByCustomer,
+            pdfUrl: poItem.AttachmentFiles.length > 0 ? poItem.AttachmentFiles[0].ServerRelativeUrl : '',
+          };
+        }
 
-        {showPOForm && (
-          <div className={styles.formOverlay}>
-            <div className={styles.poForm}>
-              <h3>Add Purchase Order</h3>
-              <label>
-                PO Number:
-                <input type="text" name="poNumber" value={poNumber} onChange={this.handlePOFormChange} />
-              </label>
-              <label>
-                PO Date:
-                <input type="date" name="poDate" value={poDate} onChange={this.handlePOFormChange} />
-              </label>
-              <label>
-                Final Rate by Customer:
-                <input type="text" name="rateByCustomer" value={rateByCustomer} onChange={this.handlePOFormChange} />
-              </label>
-              <div className={styles.formActions}>
-                <button onClick={this.savePO} className={`${styles.saveButton}`}>Save</button>
-                <button onClick={this.closePOForm} className={`${styles.cancelButton}`}>Cancel</button>
-              </div>
-            </div>
-          </div>
+        return record;
+      });
+      // console.log("Record updated")
+      setRecords(updatedRecords);
+    } catch (error) {
+      console.error('Error fetching PO data for RFQs:', error);
+    }
+  }, [records]);
+  
+  
+  
+  
+  
+  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>, serialNumber: string) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+
+    const file = event.target.files[0];
+
+    try {
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+
+      const poItems = await web.lists
+        .getByTitle('POList')
+        .items.filter(`SerialNumber eq '${serialNumber}'`)
+        .get();
+
+      if (poItems.length === 0) {
+        alert('PO record not found for this Serial Number.');
+        return;
+      }
+
+      const itemId = poItems[0].ID;
+
+      await web.lists
+        .getByTitle('POList')
+        .items.getById(itemId)
+        .attachmentFiles.add(file.name, file);
+
+      alert('PDF uploaded successfully.');
+    } catch (error) {
+      console.error('Error uploading PDF:', error);
+      alert('Failed to upload PDF. Please try again.');
+    }
+  };
+
+  return (
+    <section className={styles.pOscreen}>
+      <h2>Po Management Screen</h2>
+
+      {records.length > 0 && (
+        <div className={styles.tableWrapper}>
+          <table className={styles.detailsTable}>
+            <thead>
+              <tr>
+                <th>RFQ Number</th>
+                {/* <th>Total Rate</th> */}
+                <th>Total Weight</th>
+                <th>Total Amount</th>
+                <th>PO Number</th>
+                <th>PO Date</th>
+                <th>Final Rate by Customer</th>
+                <th>Uploaded PDF</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+  {records.map((record) => (
+    <tr key={record.serialNumber}>
+      <td>{record.rfqNumber}</td>
+      <td>{record.totalWeight}</td>
+      <td>{record.totalAmount}</td>
+      <td>{record.poNumber || 'N/A'}</td>
+      <td>{record.poDate || 'N/A'}</td>
+      <td>{record.rateByCustomer || 'N/A'}</td>
+      <td>
+        {record.pdfUrl ? (
+          <a href={record.pdfUrl} target="_blank" rel="noopener noreferrer">
+            View PDF
+          </a>
+        ) : (
+          'No PDF Uploaded'
         )}
-      </section>
-    );
-  }
-}
+      </td>
+      <td>
+        <button className={styles.addButton} 
+          onClick={() => {
+            setShowPOForm(true);
+            setRecordDetails(record);
+            setPoNumber(record.poNumber || '');
+            setPoDate(record.poDate || '');
+            setRateByCustomer(record.rateByCustomer || '');
+          }}
+        >
+          Add PO
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+          </table>
+        </div>
+      )}
+
+{showPOForm && (
+  <div className={styles.formOverlay}>
+    <div className={styles.poForm}>
+      <h3>Add Purchase Order</h3>
+      <label>
+        PO Number:
+        <input type="text" name="poNumber" value={poNumber} onChange={handlePOFormChange} />
+      </label>
+      <label>
+        PO Date:
+        <input type="date" name="poDate" value={poDate} onChange={handlePOFormChange} />
+      </label>
+      <label>
+        Final Rate by Customer:
+        <input type="text" name="rateByCustomer" value={rateByCustomer} onChange={handlePOFormChange} />
+      </label>
+      <div className={styles.fileUploadWrapper}>
+      <label htmlFor="fileUpload" className="customFileLabel">
+        Add PO Pdf Given By The Customer
+      </label>
+      <input
+        type="file"
+        id="fileUpload"
+        accept="application/pdf"
+        onChange={(event) => {
+          if (recordDetails) {
+            handlePdfUpload(event, recordDetails.serialNumber);
+            const fileName = event.target.files?.[0]?.name
+            document.querySelector('.fileName')!.textContent = fileName;
+          }
+        }}
+      />
+    </div>
+
+      <div className={styles.formActions}>
+        <button className={styles.saveButton}onClick={savePO}>Save</button>
+        <button className={styles.cancelButton}onClick={() => setShowPOForm(false)}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
+
+    </section>
+  );
+};
+
+export default POscreen;

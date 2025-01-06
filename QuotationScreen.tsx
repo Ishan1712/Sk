@@ -41,9 +41,10 @@ interface IQuotationRecord {
   status: string;
   drawingDetails: IDrawing[];
   totalweight:number;
-  totalRate: number;
   totalAmount: number;
+  avgRate:number;
   customerDetails?: ICustomerDetails; 
+  rejectionReason?: string;
 }
 
 interface IQuotationScreenState {
@@ -237,7 +238,6 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
               partName: part.PartName,
               material: part.Material,
               quantity: part.Quantity,
-              grade: part.Grade || "",
               weight: materialData.weight || part.Weight || "",
               overhead: part.Overhead || "",
               rate: materialData.rate || part.Rate || "",
@@ -277,7 +277,6 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
         QuotationDate: formattedDate, // Use formatted date string
         RevisionNumber: record.revisionNumber,
         TotalWeight: record.totalweight,
-        TotalRate: record.totalRate,
         TotalAmount: record.totalAmount,
       });
   
@@ -289,51 +288,51 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   };
 
   
-  private addAdditionalPartDetails = async (
-    rfqNumber: string,
-    drawingNumber: string,
-    partName: string,
-    additionalDetails: Partial<IPart>
-  ): Promise<void> => {
-    try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+  // private addAdditionalPartDetails = async (
+  //   rfqNumber: string,
+  //   drawingNumber: string,
+  //   partName: string,
+  //   additionalDetails: Partial<IPart>
+  // ): Promise<void> => {
+  //   try {
+  //     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
   
-      // Check if the part exists
-      const items = await web.lists
-        .getByTitle("PartList")
-        .items.filter(
-          `RFQNumber eq '${rfqNumber}' and DrawingNumber eq '${drawingNumber}' and PartName eq '${partName}'`
-        )
-        .select("Id") // Only fetch the ID of the matching item
-        .get();
+  //     // Check if the part exists
+  //     const items = await web.lists
+  //       .getByTitle("PartList")
+  //       .items.filter(
+  //         `RFQNumber eq '${rfqNumber}' and DrawingNumber eq '${drawingNumber}' and PartName eq '${partName}'`
+  //       )
+  //       .select("Id") // Only fetch the ID of the matching item
+  //       .get();
   
-      if (items.length === 0) {
-        console.warn(
-          `No matching part found for RFQNumber: ${rfqNumber}, DrawingNumber: ${drawingNumber}, and PartName: ${partName}`
-        );
-        alert(`No matching part found for RFQNumber: ${rfqNumber}, DrawingNumber: ${drawingNumber}, and PartName: ${partName}.`);
-        return;
-      }
+  //     if (items.length === 0) {
+  //       console.warn(
+  //         `No matching part found for RFQNumber: ${rfqNumber}, DrawingNumber: ${drawingNumber}, and PartName: ${partName}`
+  //       );
+  //       alert(`No matching part found for RFQNumber: ${rfqNumber}, DrawingNumber: ${drawingNumber}, and PartName: ${partName}.`);
+  //       return;
+  //     }
   
-      const itemId = items[0].Id; // Get the ID of the matching item
+  //     const itemId = items[0].Id; // Get the ID of the matching item
   
-      // Add only the additional details to the existing item
-      await web.lists.getByTitle("PartList").items.getById(itemId).update({
-        Grade: additionalDetails.grade,
-        Weight: additionalDetails.weight,
-        Overhead: additionalDetails.overhead,
-        Rate: additionalDetails.rate,
-        Labour: additionalDetails.labour,
-        LaserCut: additionalDetails.laserCut,
-        Primer: additionalDetails.primer,
-      });
+  //     // Add only the additional details to the existing item
+  //     await web.lists.getByTitle("PartList").items.getById(itemId).update({
+  //       Grade: additionalDetails.grade,
+  //       Weight: additionalDetails.weight,
+  //       Overhead: additionalDetails.overhead,
+  //       Rate: additionalDetails.rate,
+  //       Labour: additionalDetails.labour,
+  //       LaserCut: additionalDetails.laserCut,
+  //       Primer: additionalDetails.primer,
+  //     });
   
-      alert(`Additional details for "${partName}" added successfully!`);
-    } catch (error) {
-      console.error("Error adding additional details to the part:", error);
-      alert("Failed to add additional details. Please try again.");
-    }
-  };
+  //     alert(`Additional details for "${partName}" added successfully!`);
+  //   } catch (error) {
+  //     console.error("Error adding additional details to the part:", error);
+  //     alert("Failed to add additional details. Please try again.");
+  //   }
+  // };
   
   
   private handleSerialNumberChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -360,6 +359,16 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
       const rfq = rfqItems[0];
 
+       // Fetch "Reason" column from QuotationList
+    const quotationItems = await web.lists
+    .getByTitle("QuotationList")
+    .items.filter(`RFQSerialNumber eq '${serialNumber}'`)
+    .select("Reason","RevisionNumber") // Include Reason field
+    .get();
+
+    // Get the rejection reason (if any)
+    const rejectionReason = quotationItems.length > 0 ? quotationItems[0].Reason : "";
+    const revisionNumber = quotationItems.length > 0 ? quotationItems[0].RevisionNumber : "0";
       // Fetch drawing and part details
       const drawingDetails = await this.fetchDrawingAndPartDetailsBySerialNumber(serialNumber);
   
@@ -371,20 +380,21 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
         id: this.state.records.length + 1,
         serialNumber,
         rfqNumber: serialNumber,
-        revisionNumber: "",
+        revisionNumber,
         quotationDate: rfq.Date ? new Date(rfq.Date) : null,
         status: "Todo",
+        rejectionReason,
         drawingDetails,
         totalweight: 0,
-        totalRate: 0,
         totalAmount: 0,
+        avgRate: 0,
         customerDetails: customerDetails || undefined,
       };
   
       // Calculate totals
       autoPopulatedRecord.totalweight = this.calculateTotalWeight(autoPopulatedRecord);
-      autoPopulatedRecord.totalRate = this.calculateTotalRate(autoPopulatedRecord);
       autoPopulatedRecord.totalAmount = this.calculateTotalAmount(autoPopulatedRecord);
+      autoPopulatedRecord.avgRate = this.calculateAverageRate(autoPopulatedRecord);
   
       // Manually find the index using `indexOf` equivalent
       const updatedRecords = [...this.state.records];
@@ -451,7 +461,15 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
   
   
+  private calculateAverageRate = (record: IQuotationRecord): number => {
+    const totalRateSum = record.drawingDetails.reduce((sum, drawing) => {
+      return sum + drawing.partList.reduce((partSum, part) => partSum + parseFloat(part.rate || '0'), 0);
+    }, 0);
   
+    const totalParts = record.drawingDetails.reduce((count, drawing) => count + drawing.partList.length, 0);
+  
+    return totalParts > 0 ? totalRateSum / totalParts : 0;
+  };
 
   private handleDrawingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({ selectedDrawingIndex: parseInt(e.target.value) });
@@ -464,45 +482,103 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
   private confirmSubmit = async () => {
     const { recordToConfirm, records } = this.state;
+  
     if (recordToConfirm) {
       try {
-        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") ;// Replace with your SharePoint site URL
+        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") // Replace with your SharePoint site URL
   
-        // Add the record to the QuotationList
-        await this.addQuotationToList(recordToConfirm);
+        // === Step 1: Update or Add DrawingList items ===
+        for (const drawing of recordToConfirm.drawingDetails) {
+          // Calculate totals for each drawing
+          const { totalWeight, avgRate, totalAmount } = this.calculateDrawingTotals(drawing);
   
-        // Update the RFQ status to "WorkingDone" in the RFQList
-        await web.lists
+          // Check if the drawing already exists in DrawingList
+          const existingDrawings = await web.lists
+            .getByTitle("DrawingList")
+            .items.filter(`RFQNumber eq '${recordToConfirm.rfqNumber}' and DrawingNumber eq '${drawing.dno}'`)
+            .get();
+  
+          if (existingDrawings.length > 0) {
+            // Update existing drawing
+            const itemId = existingDrawings[0].Id;
+            await web.lists.getByTitle("DrawingList").items.getById(itemId).update({
+              TotalWeight: totalWeight,
+              AvgRate: avgRate,
+              TotalAmount: totalAmount,
+            });
+            console.log(`Updated DrawingList for DrawingNumber: ${drawing.dno}`);
+          } else {
+            // Add a new drawing record if it doesn't exist
+            await web.lists.getByTitle("DrawingList").items.add({
+              RFQNumber: recordToConfirm.rfqNumber,
+              DrawingNumber: drawing.dno,
+              TotalWeight: totalWeight,
+              AvgRate: avgRate,
+              TotalAmount: totalAmount,
+            });
+            console.log(`Added new DrawingList entry for DrawingNumber: ${drawing.dno}`);
+          }
+        }
+  
+        // === Step 2: Check if the record exists in QuotationList ===
+        const existingQuotations = await web.lists
+          .getByTitle("QuotationList")
+          .items.filter(`RFQSerialNumber eq '${recordToConfirm.serialNumber}'`)
+          .get();
+  
+        if (existingQuotations.length > 0) {
+          // Update existing quotation
+          const quotationId = existingQuotations[0].Id;
+          await web.lists.getByTitle("QuotationList").items.getById(quotationId).update({
+            QuotationDate: recordToConfirm.quotationDate?.toISOString().split("T")[0],
+            RevisionNumber: recordToConfirm.revisionNumber,
+            TotalWeight: recordToConfirm.totalweight,
+            TotalAmount: recordToConfirm.totalAmount,
+            Status: "WorkingDone",
+          });
+          console.log(`Updated QuotationList for SerialNumber: ${recordToConfirm.serialNumber}`);
+        } else {
+          // Add a new quotation if it doesn't exist
+          await web.lists.getByTitle("QuotationList").items.add({
+            RFQSerialNumber: recordToConfirm.serialNumber,
+            QuotationDate: recordToConfirm.quotationDate?.toISOString().split("T")[0],
+            RevisionNumber: recordToConfirm.revisionNumber,
+            TotalWeight: recordToConfirm.totalweight,
+            TotalAmount: recordToConfirm.totalAmount,
+            Status: "WorkingDone",
+          });
+          console.log(`Added new QuotationList entry for SerialNumber: ${recordToConfirm.serialNumber}`);
+        }
+  
+        // === Step 3: Update the RFQ status in RFQList ===
+        const rfqItems = await web.lists
           .getByTitle("RFQList")
           .items.filter(`RFQNumber eq '${recordToConfirm.serialNumber}'`)
-          .get()
-          .then(async (rfqItems) => {
-            if (rfqItems.length > 0) {
-              // Update the first matching RFQ item (there should be only one)
-              const rfqItemId = rfqItems[0].Id;
-              await web.lists
-                .getByTitle("RFQList")
-                .items.getById(rfqItemId)
-                .update({
-                  Status: "WorkingDone",
-                });
-              console.log(`RFQ status updated to WorkingDone for RFQ: ${recordToConfirm.serialNumber}`);
-            }
-          });
+          .get();
   
-        // Update the record's status locally
+        if (rfqItems.length > 0) {
+          const rfqItemId = rfqItems[0].Id;
+          await web.lists.getByTitle("RFQList").items.getById(rfqItemId).update({
+            Status: "WorkingDone",
+          });
+          console.log(`Updated RFQList status to "WorkingDone" for RFQ: ${recordToConfirm.serialNumber}`);
+        }
+  
+        // === Step 4: Update the local state ===
         const updatedRecords = records.map((rec) =>
           rec.id === recordToConfirm.id ? { ...rec, status: "WorkingDone" } : rec
         );
   
         this.setState({ records: updatedRecords, showSubmitConfirm: false, recordToConfirm: null });
-        alert("Quotation added and status updated successfully!");
+        alert("Quotation added/updated and status updated successfully!");
+  
       } catch (error) {
         console.error("Error during submit confirmation and status update:", error);
-        alert("Failed to add quotation or update status. Please try again.");
+        alert("Failed to add or update the quotation. Please try again.");
       }
     }
   };
+  
   
   
   private cancelSubmit = () => {
@@ -552,7 +628,6 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   
         // Update the local state with calculated totals
         currentRecord.totalweight = this.calculateTotalWeight(currentRecord);
-        currentRecord.totalRate = this.calculateTotalRate(currentRecord);
         currentRecord.totalAmount = this.calculateTotalAmount(currentRecord);
   
         const updatedRecords = records.map((record) =>
@@ -706,18 +781,17 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   private totalWeight = (part: IPart): number => {
     const weight = parseFloat(part.weight || '0');
     const overhead = parseFloat(part.overhead || '0');
-
-    return weight +overhead;
-  }
-
+    return weight + overhead;
+  };
+  
   private totalRate = (part: IPart): number => {
     const rate = parseFloat(part.rate || '0');
     const labour = parseFloat(part.labour || '0');
     const laserCut = parseFloat(part.laserCut || '0');
     const primer = parseFloat(part.primer || '0');
-
     return rate + labour + laserCut + primer;
-  }
+  };
+  
   
 
   private handleChange = (
@@ -762,26 +836,33 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     }, 0);
   };
 
-  private calculateTotalRate = (record: IQuotationRecord): number => {
-    return record.drawingDetails.reduce((totalRate, drawing) => {
-      return totalRate + drawing.partList.reduce((partRate, part) => {
-        return partRate + this.totalRate(part);
-      }, 0);
-    }, 0);
-  };
+
   private calculateTotalAmount = (record: IQuotationRecord): number => {
     return record.drawingDetails.reduce((totalAmount, drawing) => {
-      return totalAmount + drawing.partList.reduce((partAmount, part) => {
-        return partAmount + this.calculatePartTotal(part);
-      }, 0);
+      const { totalWeight, avgRate } = this.calculateDrawingTotals(drawing);
+      return totalAmount + (avgRate * totalWeight);
     }, 0);
   };
-  private calculateDrawingTotals = (drawing: IDrawing): { totalWeight: number; totalRate: number; totalAmount: number } => {
-    const totalWeight = drawing.partList.reduce((sum, part) => sum + this.totalWeight(part), 0);
-    const totalRate = drawing.partList.reduce((sum, part) => sum + this.totalRate(part), 0);
-    const totalAmount = drawing.partList.reduce((sum, part) => sum + this.calculatePartTotal(part), 0);
-    return { totalWeight, totalRate, totalAmount };
+  private calculateDrawingTotals = (drawing: IDrawing): { totalWeight: number; avgRate: number; totalAmount: number } => {
+    let totalWeight = 0;
+    let totalRateSum = 0;
+    let partCount = drawing.partList.length;
+  
+    drawing.partList.forEach((part) => {
+      const partWeight = this.totalWeight(part);
+      const partRate = this.totalRate(part);
+  
+      totalWeight += partWeight;
+      totalRateSum += partRate;
+    });
+  
+    const avgRate = partCount > 0 ? totalRateSum / partCount : 0;
+    const totalAmount = totalWeight * avgRate;
+  
+    return { totalWeight, avgRate, totalAmount };
   };
+  
+  
   
   private handleDownloadBothPDFs = async (serialNumber: string) => {
     console.log("Called")
@@ -794,7 +875,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
   private handleDownloadPDF = (rfqNumber: string) => {
     const { records } = this.state;
     const selectedRecord = records.filter(record => record.serialNumber === rfqNumber)[0] || null;
-    console.log("Called PDF")
+
     if (!selectedRecord) {
         alert("No record found for the selected RFQ number.");
         return;
@@ -809,7 +890,7 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
     doc.setFontSize(10);
     doc.text('Gat No. 240, Dhanore, Vikaswadi, Near Dhanore Phata, Markal Road, Tal Khed, Distt. Pune', pageWidth / 2, 16, { align: 'center' });
     doc.text('Pin No. 412105', pageWidth / 2, 20, { align: 'center' });
-    doc.text('E-mail: enquiry@skgroupengineering.com | Cell No: 9960414239', pageWidth / 2, 24, { align: 'center' });
+    doc.text('E-mail: sonalienterprises89@rediffmail.com | Cell No: 9960414239', pageWidth / 2, 24, { align: 'center' });
 
     // Table Headers
     const headers = [
@@ -833,6 +914,9 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
     const rows: any[] = [];
     let srNo = 1;
+    let totalOverhead = 0;
+    let totalWeightSum = 0; // Total of all part weights
+    let totalTWeightSum = 0; // Total of all total weights (weight + overhead)
 
     // Populate Table Rows
     selectedRecord.drawingDetails.forEach((drawing) => {
@@ -845,15 +929,23 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
         ]);
 
         drawing.partList.forEach((part) => {
+            const weight = parseFloat(part.weight) || 0;
+            const overhead = parseFloat(part.overhead) || 0;
+            const totalWeight = weight + overhead;
+
+            totalOverhead += overhead;
+            totalWeightSum += weight;
+            totalTWeightSum += totalWeight;
+
             rows.push([
                 '', // Blank SR NO for parts
                 '', // Blank DRG NO for parts
                 part.partName,
                 part.quantity,
-                part.grade,
-                part.weight,
-                part.overhead,
-                this.totalWeight(part).toFixed(2),
+                part.material,
+                weight.toFixed(2),
+                overhead.toFixed(2),
+                totalWeight.toFixed(2),
                 part.rate,
                 part.labour,
                 part.laserCut,
@@ -868,15 +960,8 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
     // Add Totals Row
     rows.push([
-        '', // Blank SR NO
-        '', // Blank DRG NO
-        'TOTAL',
-        '', '', '', '',
-        selectedRecord.totalweight.toFixed(2),
-        '', '', '',
-        '', // Primer total is not calculated; leave blank or adjust if needed
-        selectedRecord.totalRate.toFixed(2),
-        selectedRecord.totalAmount.toFixed(2),
+        '', '', 'TOTAL', '', '', totalWeightSum.toFixed(2), totalOverhead.toFixed(2),
+        totalTWeightSum.toFixed(2), '', '', '', '', '', selectedRecord.totalAmount.toFixed(2)
     ]);
 
     // Adjust Column Widths
@@ -899,59 +984,48 @@ export default class QuotationScreen extends React.Component<IQuotationScreenPro
 
     // Generate Table
     doc.autoTable({
-      head: headers,
-      body: rows,
-      startY: 30,
-      columnStyles: {
-          0: { cellWidth: columnWidths[0] },  // SR NO
-          1: { cellWidth: columnWidths[1] },  // DRG NO
-          2: { cellWidth: columnWidths[2] },  // ITEM
-          3: { cellWidth: columnWidths[3] },  // QTY
-          4: { cellWidth: columnWidths[4] },  // GRADE
-          5: { cellWidth: columnWidths[5] },  // WT
-          6: { cellWidth: columnWidths[6] },  // OH
-          7: { cellWidth: columnWidths[7] },  // T.WT
-          8: { cellWidth: columnWidths[8] },  // RATE
-          9: { cellWidth: columnWidths[9] },  // LABOUR
-          10: { cellWidth: columnWidths[10] }, // L/C
-          11: { cellWidth: columnWidths[11] }, // PRIMER
-          12: { cellWidth: columnWidths[12] }, // T.RATE
-          13: { cellWidth: columnWidths[13] }, // AMOUNT
-      },
-      styles: {
-          fontSize: 8,
-          cellPadding: 2,
-      },
-      headStyles: {
-          fillColor: [0, 102, 204], // Blue header
-          textColor: 255,
-          halign: 'center',
-      },
-      bodyStyles: {
-          halign: 'center',
-          valign: 'middle',
-      },
-      didParseCell: function (data) {
-          const { row, column } = data;
-          const rowIndex = row.index; // Current row index
-  
-          // Check if it's the TOTAL row
-          if (rowIndex === rows.length - 1) {
-              // Make the entire TOTAL row bold
-              data.cell.styles.fontStyle = 'bold';
-          }
-  
-          // Alternatively, make only specific columns bold
-          if (rowIndex === rows.length - 1 && (column.index === 2 || column.index === 13)) {
-              // Column 2 (TOTAL label) and Column 13 (Total Amount)
-              data.cell.styles.fontStyle = 'bold';
-          }
-      },
-  });
+        head: headers,
+        body: rows,
+        startY: 30,
+        columnStyles: columnWidths.reduce((acc, width, index) => {
+            acc[index] = { cellWidth: width };
+            return acc;
+        }, {}),
+        styles: {
+            fontSize: 8,
+            cellPadding: 2,
+        },
+        headStyles: {
+            fillColor: [0, 102, 204], // Blue header
+            textColor: 255,
+            halign: 'center',
+        },
+        bodyStyles: {
+            halign: 'center',
+            valign: 'middle',
+        },
+        didParseCell: function (data) {
+            const { row, column } = data;
+            const rowIndex = row.index; // Current row index
+
+            // Check if it's the TOTAL row
+            if (rowIndex === rows.length - 1) {
+                // Make the entire TOTAL row bold
+                data.cell.styles.fontStyle = 'bold';
+            }
+
+            // Alternatively, make only specific columns bold
+            if (rowIndex === rows.length - 1 && (column.index === 2 || column.index === 13)) {
+                // Column 2 (TOTAL label) and Column 13 (Total Amount)
+                data.cell.styles.fontStyle = 'bold';
+            }
+        },
+    });
 
     // Save PDF
     doc.save(`${rfqNumber}_quotation_report.pdf`);
 };
+
 
 private handleDownloadSecondPDF = async (rfqNumber: string) => {
   try {
@@ -1001,7 +1075,7 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
       16,
       { align: "center" }
     );
-    doc.text("Email: skgupta.07sg@gmail.com | Contact: 9960414239", 105, 22, {
+    doc.text("Email: sonalienterprises89@rediffmail.com | Contact: 9960414239", 105, 22, {
       align: "center",
     });
 
@@ -1049,7 +1123,7 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
     // Add Table
     const tableHeaders = [["SR NO", "DRG NO.", "T.WT", "OH", "RATE", "AMOUNT"]];
     const tableRows = selectedRecord.drawingDetails.map((drawing, index) => {
-      const { totalWeight, totalRate, totalAmount } = this.calculateDrawingTotals(drawing);
+      const { totalWeight,avgRate, totalAmount } = this.calculateDrawingTotals(drawing);
       const overhead = totalWeight * 0.1; // Overhead as 10% of total weight
 
       return [
@@ -1057,7 +1131,7 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
         drawing.dno,
         totalWeight.toFixed(2),
         overhead.toFixed(2),
-        totalRate.toFixed(2),
+        avgRate.toFixed(2),
         totalAmount.toFixed(2),
       ];
     });
@@ -1233,9 +1307,9 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
                   <th>Quotation date</th>
                   <th> Revison number </th>
                   <th>Total Weight</th>
-                  <th>Total Rate</th>
                   <th>Total Amount</th>
                   <th>Status</th>
+                  <th>Reject Reason</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1258,46 +1332,51 @@ private handleDownloadSecondPDF = async (rfqNumber: string) => {
         )}
       </td>
       <td>
-      {record.drawingDetails.map((drawing, dIndex) => {
-  // Calculate totals for the drawing
-  const { totalWeight, totalRate, totalAmount } = this.calculateDrawingTotals(drawing);
+  {record.drawingDetails.map((drawing, dIndex) => {
+    const { totalWeight, avgRate, totalAmount } = this.calculateDrawingTotals(drawing);
 
-  return (
-    <div key={dIndex}>
-      {/* Drawing Information */}
-      <strong>{drawing.dlist || "Unnamed Drawing"}</strong> (Dno: {drawing.dno || "N/A"}, Quantity: {drawing.dquan || 0})
-      <ul>
-        {/* Part Information */}
-        {drawing.partList && drawing.partList.length > 0 ? (
-          drawing.partList.map((part, pIndex) => (
-            <li key={pIndex}>
-              <strong>{part.partName || "Unnamed Part"}</strong><br />
-              Material: {part.material || "N/A"}, Quantity: {part.quantity || "0"}<br />
-              Grade: {part.grade || "N/A"}, Weight: {part.weight || "0"}, Overhead: {part.overhead || "0"}<br />
-              Rate: {part.rate || "0"}, Labour: {part.labour || "0"}, Laser Cut: {part.laserCut || "0"}, Primer: {part.primer || "0"}<br />
-              <strong>Part Total:</strong> {this.calculatePartTotal(part).toFixed(2)}
-            </li>
-          ))
-        ) : (
-          <li>No parts available for this drawing.</li>
-        )}
-      </ul>
-      {/* Totals for the Drawing */}
-      <p>
-        <strong>Total Weight:</strong> {totalWeight.toFixed(2)}<br />
-        <strong>Total Rate:</strong> {totalRate.toFixed(2)}<br />
-        <strong>Total Amount:</strong> {totalAmount.toFixed(2)}
-      </p>
-    </div>
-  );
-})}
+    return (
+      <div key={dIndex}>
+        {/* Drawing Information */}
+        <strong>{drawing.dlist || "Unnamed Drawing"}</strong> (Dno: {drawing.dno || "N/A"}, Quantity: {drawing.dquan || 0})
+        <ul>
+          {drawing.partList.map((part, pIndex) => {
+            const partTotalWeight = this.totalWeight(part);
+            const partTotalRate = this.totalRate(part);
+            const partTotalAmount = partTotalWeight * partTotalRate;
+
+            return (
+              <li key={pIndex}>
+                <strong>Part Name:</strong> {part.partName || "Unnamed Part"}<br />
+                <strong>Material:</strong> {part.material || "N/A"}, Quantity: {part.quantity || "0"}<br />
+                <strong>Grade:</strong> {part.material || "N/A"}<br />
+                <strong>Weight:</strong> {part.weight || "0"}, <strong>Overhead:</strong> {part.overhead || "0"}<br />
+                <strong>Total Weight:</strong> {partTotalWeight.toFixed(2)}<br />
+                <strong>Rate:</strong> {part.rate || "0"}, Labour: {part.labour || "0"}, Laser Cut: {part.laserCut || "0"}, Primer: {part.primer || "0"}<br />
+                <strong>Total Rate:</strong> {partTotalRate.toFixed(2)}<br />
+                <strong>Total Amount:</strong> {partTotalAmount.toFixed(2)}
+              </li>
+            );
+          })}
+        </ul>
+        {/* Display totals for the drawing */}
+        <p>
+          <strong>Total Weight:</strong> {totalWeight.toFixed(2)}<br />
+          <strong>Average Rate:</strong> {avgRate.toFixed(2)}<br />
+          <strong>Total Amount:</strong> {totalAmount.toFixed(2)}
+        </p>
+      </div>
+    );
+  })}
 </td>
+
+
       <td>{record.quotationDate ? record.quotationDate.toISOString().split('T')[0] : ''}</td>
       <td>{record.revisionNumber}</td>
       <td>{record.totalweight}</td>
-      <td>{record.totalRate}</td>
       <td>{record.totalAmount}</td>
       <td>{record.status}</td>
+      <td>{record.rejectionReason || 'N/A'}</td> 
       <td>
         <button onClick={() => this.handleSubmitConfirm(record)} className={styles.submitButton}>Add Quotation</button>
         <button onClick={() => this.handleEdit(record)} className={styles.editButton}>Edit Quotation</button>

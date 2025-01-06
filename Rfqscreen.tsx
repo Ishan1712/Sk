@@ -101,7 +101,6 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
   };
 
   private setRfqNumber = (value: string): void => this.setState({ rfqNumber: value });
-  // private setCustomerName = (value: string): void => this.setState({ customerName: value });
   private setProjectName = (value: string): void => this.setState({ projectName: value });
   private setDate = (value: string): void => this.setState({ date: value ? new Date(value) : null });
   private setDrawingQuantity = (value: string): void => this.setState({ drawingQuantity: value });
@@ -111,7 +110,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
 
   private addRfqToSharePoint = async (rfqNumber: string ,customerName: string,projectName: string,date: Date ,subject: string ): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+    const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
       await web.lists.getByTitle('RFQList').items.add({
         RFQNumber: rfqNumber,
         CustomerName: customerName,
@@ -129,7 +128,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
   
   private loadCustomersFromSharePoint = async (): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
       const items = await web.lists
         .getByTitle('CustomerList')
         .items.select('CustomerName', 'ContactPerson') // Fetch ContactPerson column
@@ -160,7 +159,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
     drawingQuantity: string
   ): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
       await web.lists.getByTitle('DrawingList').items.add({
         RFQNumber: rfqNumber,
         DrawingNumber: drawingNumber,
@@ -182,7 +181,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
     quantity: string
   ): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
 
       await web.lists.getByTitle('PartList').items.add({
         RFQNumber: rfqNumber,
@@ -200,7 +199,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
   };
   private getTotalDrawingsForRfq = async (rfqNumber: string): Promise<number> => {
     try {
-     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+   const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
       const items = await web.lists
         .getByTitle('DrawingList')
         .items.filter(`RFQNumber eq '${rfqNumber}'`)
@@ -213,7 +212,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
   };
   private loadRfqFromSharePoint = async (): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+    const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
       const items = await web.lists
         .getByTitle('RFQList')
         .items.select('Id', 'RFQNumber', 'CustomerName', 'ProjectNumber', 'Subject', 'Date')
@@ -244,7 +243,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
 
   // private loadDrawingFromSharePoint = async (): Promise<void> => {
   //   try {
-  //     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement"); 
+  //     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
   
   //     const items = await web.lists
   //       .getByTitle('DrawingList')
@@ -267,7 +266,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
 
   // private loadPartsFromSharePoint = async (): Promise<void> => {
   //   try {
-  //     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+  //     const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
 
   //     const items = await web.lists
   //       .getByTitle('PartList')
@@ -289,7 +288,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
 
   private loadPartNamesFromSharePoint = async (): Promise<void> => {
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
       const items = await web.lists
         .getByTitle('MaterialList')
         .items.select('PartNumber') // Fetch PartNumber column
@@ -443,7 +442,7 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
     if (!selectedRfq) return;
   
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
   
       // Update the RFQ in the SharePoint list
       await web.lists.getByTitle('RFQList').items.getById(selectedRfq.Id).update({
@@ -493,42 +492,70 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
     if (!selectedRfq) return;
   
     try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement") 
+      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
+     // Step 3: Delete associated quotations
+    const quotationsToDelete = await web.lists
+    .getByTitle("QuotationList")
+    .items.filter(`RFQSerialNumber eq '${selectedRfq.rfqNumber}'`)
+    .get();
+
+  for (const quotation of quotationsToDelete) {
+    try {
+      await web.lists.getByTitle("QuotationList").items.getById(quotation.Id).delete();
+    } catch (error) {
+      console.error(`Error deleting quotation with Id ${quotation.Id}:`, error);
+    }
+  }
+    // Step 4: Delete associated revisions
+    const revisionsToDelete = await web.lists
+    .getByTitle("QuotationRevision")
+    .items.filter(`RFQSerialNumber eq '${selectedRfq.rfqNumber}'`)
+    .get();
+
+  for (const revision of revisionsToDelete) {
+    try {
+      await web.lists.getByTitle("QuotationRevision").items.getById(revision.Id).delete();
+    } catch (error) {
+      console.error(`Error deleting revision with Id ${revision.Id}:`, error);
+    }
+  }
   
-      // Delete associated drawings
-      const drawingsToDelete = await web.lists.getByTitle('DrawingList')
+        // Delete associated drawings
+        const drawingsToDelete = await web.lists
+        .getByTitle("DrawingList")
         .items.filter(`RFQNumber eq '${selectedRfq.rfqNumber}'`)
         .get();
   
       for (const drawing of drawingsToDelete) {
-        await web.lists.getByTitle('DrawingList').items.getById(drawing.Id).delete();
+        await web.lists.getByTitle("DrawingList").items.getById(drawing.Id).delete();
       }
   
       // Delete associated parts
-      const partsToDelete = await web.lists.getByTitle('PartList')
+      const partsToDelete = await web.lists
+        .getByTitle("PartList")
         .items.filter(`RFQNumber eq '${selectedRfq.rfqNumber}'`)
         .get();
   
       for (const part of partsToDelete) {
-        await web.lists.getByTitle('PartList').items.getById(part.Id).delete();
+        await web.lists.getByTitle("PartList").items.getById(part.Id).delete();
       }
-  
-      // Delete the RFQ itself
-      await web.lists.getByTitle('RFQList').items.getById(selectedRfq.Id).delete();
-  
+
+   // Finally, delete the RFQ itself
+    await web.lists.getByTitle("RFQList").items.getById(selectedRfq.Id).delete();
+  alert("RFQ and associated data deleted successfully!");
+
       // Update the state to remove the deleted RFQ from the UI
       const updatedRfqList = rfqList.filter((rfq) => rfq.Id !== selectedRfq.Id);
-  
       this.setState({
         rfqList: updatedRfqList,
         isDeleteModalVisible: false,
         selectedRfq: null,
       });
   
-      alert('RFQ and all associated data have been deleted successfully!');
+      alert("RFQ and all associated data have been deleted successfully!");
     } catch (error) {
-      console.error('Error deleting RFQ:', error);
-      alert('Failed to delete RFQ. Please try again.');
+      console.error("Error deleting RFQ:", error);
+      alert("Failed to delete RFQ. Please try again.");
     }
   };
   private handlePartSelection = async (selectedPartName: string): Promise<void> => {
@@ -552,8 +579,6 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
       alert('Failed to fetch material. Please try again.');
     }
   };
-  
-
   public render(): React.ReactElement {
     const {
       rfqNumber,
@@ -564,14 +589,11 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
       drawingNumber,
       quantity,
       rfqList,
-      // drawingList,
-      // currentPartList,
       customerOptions,
       isRfqFormVisible,
       isDrawingFormVisible,
       isPartModalVisible,
       isEditModalVisible,
-      isDeleteModalVisible,
       editCustomerName,
       editProjectName,
       editDate,
@@ -636,12 +658,12 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
         }}
         options={this.state.partNameOptions}
       />
-
         <TextField
           label="Material/grade"
           value={this.state.material} // Bind to the state
           onChange={(e, newValue) => this.setMaterial(newValue || '')} // Allow manual editing if necessary
         />
+
           <TextField label="Quantity" value={quantity} onChange={(e, newValue) => this.setQuantity(newValue || '')} />
           <DialogFooter>
             <PrimaryButton text="Submit Part" onClick={this.addPart} />
@@ -732,21 +754,20 @@ export default class RfqScreen extends React.Component<IRfqscreenProps, IRfqScre
             <PrimaryButton text="Cancel" onClick={this.hideEditModal} />
           </DialogFooter>
         </Dialog>
-        {/* Delete Modal */}
         <Dialog
-          hidden={!isDeleteModalVisible}
-          onDismiss={this.hideDeleteModal}
-          dialogContentProps={{
-            type: DialogType.largeHeader,
-            title: 'Confirm Delete',
-            subText: 'Are you sure you want to delete this RFQ?',
+           hidden={!this.state.isDeleteModalVisible}
+           onDismiss={this.hideDeleteModal}
+           dialogContentProps={{
+           type: DialogType.largeHeader,
+           title: "Confirm Delete",
+           subText: "Are you sure you want to delete this RFQ? This action will remove all associated records from DrawingList, PartList, QuotationList, and RevisionList.",
           }}
         >
-          <DialogFooter>
-            <PrimaryButton text="Yes" onClick={this.deleteRfq} />
-            <PrimaryButton text="No" onClick={this.hideDeleteModal} />
-          </DialogFooter>
-        </Dialog>
+        <DialogFooter>
+         <PrimaryButton text="Yes" onClick={this.deleteRfq} />
+          <PrimaryButton text="No" onClick={this.hideDeleteModal} />
+        </DialogFooter>
+      </Dialog>
         </div>
       </section>
     );

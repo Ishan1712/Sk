@@ -15,7 +15,86 @@ interface QuotationData {
   revisionNumber: number;
   lossreason?:string;
 }
+const fetchHighestRevisionRecord = async (rfqNumber: string, web: Web): Promise<QuotationData | null> => {
+  try {
+    // Fetch records from QuotationList
+    const quotationItems = await web.lists
+      .getByTitle("QuotationList")
+      .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
+      .select("ID", "RFQSerialNumber", "RevisionNumber", "QuotationDate", "TotalAmount", "TotalRate", "TotalWeight", "Status", "Reason", "ApprovalDate")
+      .get();
 
+    // Fetch records from QuotationRevision
+    const revisionItems = await web.lists
+      .getByTitle("QuotationRevision")
+      .items.filter(`RFQSerialNumber eq '${rfqNumber}'`)
+      .select("ID", "RFQSerialNumber", "RevisionNumber", "RevisionDate", "TotalAmount", "TotalRate", "TotalWeight", "Statuss", "Reason", "ApprovalDate")
+      .get();
+
+    // Find the highest revision number across both lists
+    let highestRevisionNumber = 0;
+    let highestSource = "QuotationList"; // Track the source of the highest revision
+
+    quotationItems.forEach((item : any) => {
+      const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
+      if (revisionNumber > highestRevisionNumber) {
+        highestRevisionNumber = revisionNumber;
+        highestSource = "QuotationList";
+      }
+    });
+
+    revisionItems.forEach((item : any) => {
+      const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
+      if (revisionNumber > highestRevisionNumber) {
+        highestRevisionNumber = revisionNumber;
+        highestSource = "QuotationRevision";
+      }
+    });
+
+    if (highestSource === "QuotationList") {
+      // Fetch the record with the highest revision number from QuotationList
+      const highestRevisionItem = quotationItems.find((item: {
+        RevisionNumber?: string;
+      }) => parseInt(item.RevisionNumber || "0", 10) === highestRevisionNumber);
+
+      if (highestRevisionItem) {
+        return {
+          id: highestRevisionItem.ID,
+          serialNumber: highestRevisionItem.RFQSerialNumber || "",
+          quotationDate: highestRevisionItem.QuotationDate || "",
+          totalAmount: parseFloat(highestRevisionItem.TotalAmount || "0"),
+          totalRate: parseFloat(highestRevisionItem.TotalRate || "0"),
+          totalWeight: parseFloat(highestRevisionItem.TotalWeight || "0"),
+          status: highestRevisionItem.Status || "",
+          revisionNumber: highestRevisionNumber,
+        };
+      }
+    } else if (highestSource === "QuotationRevision") {
+      // Fetch the record with the highest revision number from QuotationRevision
+      const highestRevisionItem = revisionItems.find((item: {
+        RevisionNumber?: string;
+      }) => parseInt(item.RevisionNumber || "0", 10) === highestRevisionNumber);
+
+      if (highestRevisionItem) {
+        return {
+          id: highestRevisionItem.ID,
+          serialNumber: highestRevisionItem.RFQSerialNumber || "",
+          quotationDate: highestRevisionItem.RevisionDate || "",
+          totalAmount: parseFloat(highestRevisionItem.TotalAmount || "0"),
+          totalRate: parseFloat(highestRevisionItem.TotalRate || "0"),
+          totalWeight: parseFloat(highestRevisionItem.TotalWeight || "0"),
+          status: highestRevisionItem.Statuss || "",
+          revisionNumber: highestRevisionNumber,
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching highest revision record for RFQ ${rfqNumber}:`, error);
+    return null;
+  }
+};
 const QuotationResult: React.FC<IQuotationResultProps> = ({ userDisplayName }) => {
   const [quotations, setQuotations] = useState<QuotationData[]>([]);
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -23,125 +102,53 @@ const QuotationResult: React.FC<IQuotationResultProps> = ({ userDisplayName }) =
   const [currentQuotation, setCurrentQuotation] = useState<QuotationData | null>(null);
   const reasonOptions = ["Delivery", "Budget", "Material Specification"];
 
-  const fetchHighestRevisionRecord = async (rfqNumber: string, web: Web): Promise<QuotationData | null> => {
-    try {
-      // Fetch records from QuotationList
-      const quotationItems = await web.lists
+
+  
+  useEffect(() => {
+    const fetchAllHighestRevisions = async () => {
+      try {
+        const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement")
+        // Fetch RFQ Serial Numbers from QuotationList and QuotationRevision
+        const quotationItems = await web.lists
         .getByTitle("QuotationList")
-        .items.filter(`RFQSerialNumber eq '${rfqNumber}' and Status eq 'Waiting'`)
-        .select("ID", "RFQSerialNumber", "RevisionNumber", "QuotationDate", "TotalAmount", "TotalRate", "TotalWeight", "Status","LossReason")
+        .items.filter("Status eq 'Waiting'")
+        .select("RFQSerialNumber")
         .get();
   
-      // Check for a record in QuotationList with RevisionNumber 0 and Status 'Waiting'
-      const zeroRevisionItem = quotationItems.find((item: { 
-        RevisionNumber?: string; 
-        Status?: string; 
-      }) => parseInt(item.RevisionNumber || "0", 10) === 0 && item.Status === "Waiting");
-  
-      if (zeroRevisionItem) {
-        // If a valid revision 0 item exists in QuotationList, return it directly
-        return {
-          id: zeroRevisionItem.ID,
-          serialNumber: zeroRevisionItem.RFQSerialNumber || "",
-          quotationDate: zeroRevisionItem.QuotationDate || "",
-          totalAmount: parseFloat(zeroRevisionItem.TotalAmount || "0"),
-          totalRate: parseFloat(zeroRevisionItem.TotalRate || "0"),
-          totalWeight: parseFloat(zeroRevisionItem.TotalWeight || "0"),
-          status: zeroRevisionItem.Status || "",
-          revisionNumber: 0,
-          lossreason:zeroRevisionItem.LossReason || "",
-        };
-      }
-  
-      // Fetch records from QuotationRevision if no valid revision 0 is found
-      const revisionItems = await web.lists
+        const revisionItems = await web.lists
         .getByTitle("QuotationRevision")
-        .items.filter(`RFQSerialNumber eq '${rfqNumber}' and Statuss eq 'Waiting'`)
-        .select("ID", "RFQSerialNumber", "RevisionNumber", "RevisionDate", "TotalAmount", "TotalRate", "TotalWeight", "Statuss")
+        .items.filter("Statuss eq 'Waiting'")
+        .select("RFQSerialNumber")
         .get();
   
-      // Combine records and map to uniform structure
-      const allItems = [
-        ...quotationItems.map((item: any) => ({
-          ...item,
-          Status: item.Status, // Status is directly from QuotationList
-        })),
-        ...revisionItems.map((item: any) => ({
-          ...item,
-          Status: item.Statuss, // Map Statuss from QuotationRevision to Status
-        })),
-      ];
-  
-      // Find the highest revision number
-      let highestRecord: QuotationData | null = null;
-      let highestRevisionNumber = 0;
-  
-      allItems.forEach((item) => {
-        const revisionNumber = parseInt(item.RevisionNumber || "0", 10);
-        if (revisionNumber > highestRevisionNumber) {
-          highestRevisionNumber = revisionNumber;
-          highestRecord = {
-            id: item.ID,
-            serialNumber: item.RFQSerialNumber || "",
-            quotationDate: item.QuotationDate || item.RevisionDate || "",
-            totalAmount: parseFloat(item.TotalAmount || "0"),
-            totalRate: parseFloat(item.TotalRate || "0"),
-            totalWeight: parseFloat(item.TotalWeight || "0"),
-            status: item.Status || "",
-            revisionNumber: revisionNumber,
-            // lossreason: item.LossReason || "",
-          };
-        }
-      });
-  
-      return highestRecord;
-    } catch (error) {
-      console.error(`Error fetching highest revision record for RFQ ${rfqNumber}:`, error);
-      return null;
-    }
-  };
-  
-  const fetchQuotations = async () => {
-    try {
-      const web = new Web("https://skgroupenginering.sharepoint.com/sites/SalesManagement");
-
-      // Fetch RFQ Serial Numbers from both lists
-      const quotationItems = await web.lists
-        .getByTitle('QuotationList')
-        .items.filter("Status eq 'Waiting'")
-        .select('RFQSerialNumber')
-        .get();
-
-      const revisionItems = await web.lists
-        .getByTitle('QuotationRevision')
-        .items.filter("Status eq 'Waiting'")
-        .select('RFQSerialNumber')
-        .get();
-
-      // Combine and deduplicate RFQ Serial Numbers
+     // Combine and deduplicate RFQ Serial Numbers
       const rfqSerialNumbers: string[] = [];
       const rfqSet = new Set<string>();
-
+  
       [...quotationItems, ...revisionItems].forEach((item) => {
-        const rfqSerialNumber = item.RFQSerialNumber;
+      const rfqSerialNumber = item.RFQSerialNumber;
         if (rfqSerialNumber && !rfqSet.has(rfqSerialNumber)) {
-          rfqSet.add(rfqSerialNumber);
-          rfqSerialNumbers.push(rfqSerialNumber);
-        }
+           rfqSet.add(rfqSerialNumber);
+           rfqSerialNumbers.push(rfqSerialNumber);
+         }
       });
-
-      // Fetch the highest revision record for each RFQ Serial Number
-      const results = await Promise.all(
-        rfqSerialNumbers.map(async (rfqNumber) => {
-          return await fetchHighestRevisionRecord(rfqNumber, web);
-        })
-      );
-
-      setQuotations(results.filter((q): q is QuotationData => q !== null));
-    } catch (error) {
-      console.error('Error fetching quotations:', error);
-    }
-  };
+  
+        // Fetch the highest revision record for each RFQ Serial Number
+        const updatedQuotations = await Promise.all(
+          rfqSerialNumbers.map(async (rfqNumber) => {
+            return await fetchHighestRevisionRecord(rfqNumber, web);
+          })
+        );
+  
+        // Update the quotations state
+        setQuotations(updatedQuotations.filter((q): q is QuotationData => q !== null));
+      } catch (error) {
+        console.error("Error fetching quotations:", error);
+      }
+    };
+  
+    fetchAllHighestRevisions();
+  }, []);
 
   const updateQuotationStatus = async (
     quotation: QuotationData,
@@ -266,11 +273,6 @@ const QuotationResult: React.FC<IQuotationResultProps> = ({ userDisplayName }) =
   };
   
 
-  useEffect(() => {
-    fetchQuotations();
-  }, []);
-
-
 
   return (
     <section className={styles.quotationresultscreen}>
@@ -283,7 +285,7 @@ const QuotationResult: React.FC<IQuotationResultProps> = ({ userDisplayName }) =
                 <th>Quotation Date</th>
                 <th>RFQ Serial Number</th>
                 <th>Total Amount</th>
-                <th>Total Rate</th>
+                {/* <th>Total Rate</th> */}
                 <th>Total Weight</th>
                 <th>Status</th>
                 <th>Reason</th>
@@ -296,7 +298,7 @@ const QuotationResult: React.FC<IQuotationResultProps> = ({ userDisplayName }) =
                   <td>{quotation.quotationDate}</td>
                   <td>{quotation.serialNumber}</td>
                   <td>{quotation.totalAmount}</td>
-                  <td>{quotation.totalRate}</td>
+                  {/* <td>{quotation.totalRate}</td> */}
                   <td>{quotation.totalWeight}</td>
                   <td>{quotation.status}</td>
                   <td>{quotation.lossreason || "N/A"}</td> 
